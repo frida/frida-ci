@@ -1,5 +1,12 @@
 #! /bin/bash -e
 
+bp=$(cd $(dirname $0) ; pwd)
+
+if [ ! -f $bp/build-deps.sh ] ; then
+  echo "Missing required script $0/build-deps.sh" > /dev/stderr
+  exit 1
+fi
+
 rm -rf $HOME/apps/valac
 rm -rf frida-build-env
 rm -rf valac
@@ -21,7 +28,6 @@ git submodule update
 
 mkdir -p build/toolchain/share/aclocal/
 mkdir -p build/sdk-linux-x86_64/share/aclocal/
-# build/frida-linux-x86_64/share/aclocal/??
 mkdir -p build/toolchain/bin/
 
 ln -sf $HOME/apps/valac/bin/valac-0.14 build/toolchain/bin/valac-0.14
@@ -31,7 +37,7 @@ export FRIDA_TARGET=linux-x86_64
 
 (
   . build/frida-env-linux-x86_64.rc
-  ./build-deps.sh toolchain
+  FRIDA_ROOT=`pwd` $bp/build-deps.sh toolchain
 )
 
 pushd .
@@ -45,9 +51,9 @@ popd
 ./setup-env.sh
 (
   . build/frida-env-linux-x86_64.rc
-  ./build-deps.sh sdk
+  FRIDA_ROOT=`pwd` $bp/build-deps.sh sdk
 )
 
-echo "For upload:"
+echo "New toolchain and SDK ready for upload:"
 echo build/toolchain*.tar.bz2
 echo build/sdk-linux*.tar.bz2

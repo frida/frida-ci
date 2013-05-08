@@ -51,7 +51,8 @@ echo iface eth0 inet manual >> $CHROOT/etc/network/interfaces
 
 rm -f $CHROOT/etc/mtab
 chroot $CHROOT ln -sf /proc/mounts /etc/mtab
-chroot $CHROOT apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy install build-essential gcc git sudo flex bison
+chroot $CHROOT apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy install build-essential gcc git sudo flex bison libglib2.0-dev
+chroot $CHROOT useradd --create-home --user-group --groups adm,sudo -s /bin/bash --skel /etc/skel frida
 
 umount $CHROOT/proc
 umount $CHROOT/dev/pts
