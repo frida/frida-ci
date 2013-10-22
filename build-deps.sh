@@ -28,8 +28,8 @@ case $build_os in
     exit 1
 esac
 
-if [ -z $FRIDA_TARGET ] ; then
-  if [ $build_os = 'linux' ] ; then
+if [ -z $FRIDA_TARGET ]; then
+  if [ $build_os = 'linux' ]; then
     case $(uname -m) in
       x86_64)
         FRIDA_TARGET=linux-x86_64
@@ -83,7 +83,7 @@ function expand_target ()
       echo x86_64-pc-linux-gnu
     ;;
     android)
-      echo arm-unknown-linux-androideabi
+      echo armv7-none-linux-androideabi
     ;;
     mac32)
       echo i686-apple-darwin
@@ -164,6 +164,7 @@ function build_sdk ()
   mkdir -p "$BUILDROOT" || exit 1
   pushd "$BUILDROOT" >/dev/null || exit 1
 
+  [ "${FRIDA_TARGET}" = "android" ] && build_iconv
   [ "${FRIDA_TARGET}" = "linux-arm" ] && build_module zlib
   build_module libffi $(expand_target $FRIDA_TARGET)
   build_module glib
@@ -258,6 +259,59 @@ function build_module ()
   fi
 }
 
+function build_iconv ()
+{
+  if [ ! -d "libiconv-1.14" ]; then
+    curl "http://gnuftp.uib.no/libiconv/libiconv-1.14.tar.gz" | tar x
+    pushd libiconv-1.14 >/dev/null || exit 1
+    patch -p1 << EOF
+--- libiconv/Makefile.in	2009-06-21 19:17:33.000000000 +0800
++++ libiconv/Makefile.in	2011-10-13 22:51:46.000000000 +0800
+@@ -32,11 +32,6 @@ SHELL = /bin/sh
+ all : lib/localcharset.h force
+ 	cd lib && \$(MAKE) all
+ 	cd preload && \$(MAKE) all
+-	cd srclib && \$(MAKE) all
+-	cd src && \$(MAKE) all
+-	cd po && \$(MAKE) all
+-	cd man && \$(MAKE) all
+-	if test -d tests; then cd tests && \$(MAKE) all; fi
+ 
+ lib/localcharset.h :
+ 	builddir="`pwd`"; cd libcharset && \$(MAKE) all && \$(MAKE) install-lib libdir="\$\$builddir/lib" includedir="\$\$builddir/lib"
+@@ -52,23 +47,16 @@ install : lib/localcharset.h force
+ 	cd libcharset && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	cd lib && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	cd preload && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+-	cd srclib && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+-	cd src && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	if [ ! -d \$(DESTDIR)\$(includedir) ] ; then \$(mkinstalldirs) \$(DESTDIR)\$(includedir) ; fi
+ 	\$(INSTALL_DATA) include/iconv.h.inst \$(DESTDIR)\$(includedir)/iconv.h
+-	cd po && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' datarootdir='\$(datarootdir)' datadir='\$(datadir)'
+-	cd man && \$(MAKE) install prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' datarootdir='\$(datarootdir)' datadir='\$(datadir)' mandir='\$(mandir)'
+ 
+ install-strip : lib/localcharset.h force
+ 	cd libcharset && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	cd lib && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	cd preload && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	cd srclib && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+-	cd src && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+ 	if [ ! -d \$(DESTDIR)\$(includedir) ] ; then \$(mkinstalldirs) \$(DESTDIR)\$(includedir) ; fi
+ 	\$(INSTALL_DATA) include/iconv.h.inst \$(DESTDIR)\$(includedir)/iconv.h
+-	cd po && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' datarootdir='\$(datarootdir)' datadir='\$(datadir)'
+-	cd man && \$(MAKE) install-strip prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' datarootdir='\$(datarootdir)' datadir='\$(datadir)' mandir='\$(mandir)'
+ 
+ installdirs : force
+ 	cd libcharset && \$(MAKE) installdirs prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
+EOF
+    FRIDA_LEGACY_AUTOTOOLS=1 ./configure --enable-static --enable-relocatable --disable-rpath || exit 1
+    make -j8 || exit 1
+    make install || exit 1
+    popd >/dev/null
+    rm -f "${FRIDA_PREFIX}/config.cache"
+  fi
+}
+
 function build_v8_generic ()
 {
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" LD="$CXX" make $target GYPFLAGS="$flags" V=1
@@ -293,23 +347,28 @@ function build_v8 ()
       case $FRIDA_TARGET in
         linux-x86_32)
           target=ia32.release
-          flags="-f make-linux -D host_os=linux"
+          flags="-f make-linux -D host_os=$build_os"
         ;;
         linux-x86_64)
           target=x64.release
-          flags="-f make-linux -D host_os=linux"
+          flags="-f make-linux -D host_os=$build_os"
+        ;;
+        android)
+          target=android_arm.release
+          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot='false'"
+          flavor=v8_nosnapshot
         ;;
         mac32)
           target=ia32.release
-          flags="-f make-mac -D host_os=mac"
+          flags="-f make-mac -D host_os=$build_os"
         ;;
         mac64)
           target=x64.release
-          flags="-f make-mac -D host_os=mac"
+          flags="-f make-mac -D host_os=$build_os"
         ;;
         ios)
           target=arm.release
-          flags="-f make-mac -D host_os=mac"
+          flags="-f make-mac -D host_os=$build_os"
           flavor=v8_nosnapshot
         ;;
         *)
@@ -325,7 +384,7 @@ function build_v8 ()
     fi
 
     case $FRIDA_TARGET in
-      linux-*)
+      linux-*|android)
         outdir=out/$target/obj.target/tools/gyp
       ;;
       *)
