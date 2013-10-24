@@ -324,8 +324,24 @@ function build_bfd ()
 {
   if [ ! -d "binutils-2.23.2" ]; then
     curl "http://gnuftp.uib.no/binutils/binutils-2.23.2.tar.bz2" | tar x
-    pushd "binutils-2.23.2/bfd" >/dev/null || exit 1
-    patch -p2 << EOF
+    pushd "binutils-2.23.2" >/dev/null || exit 1
+    patch -p1 << EOF
+diff -Nur binutils-2.23.2-old/libiberty/getpagesize.c binutils-2.23.2/libiberty/getpagesize.c
+--- binutils-2.23.2-old/libiberty/getpagesize.c	2005-03-28 04:09:01.000000000 +0200
++++ binutils-2.23.2/libiberty/getpagesize.c	2013-10-24 22:45:24.000000000 +0200
+@@ -20,6 +20,7 @@
+ 
+ */
+ 
++#ifndef ANDROID
+ #ifndef VMS
+ 
+ #include "config.h"
+@@ -88,3 +89,4 @@
+ }
+ 
+ #endif /* VMS */
++#endif /* ANDROID */
 diff -Nur binutils-2.23.2-old/bfd/archive.c binutils-2.23.2/bfd/archive.c
 --- binutils-2.23.2-old/bfd/archive.c	2013-03-25 09:06:19.000000000 +0100
 +++ binutils-2.23.2/bfd/archive.c	2013-10-24 21:48:30.000000000 +0200
@@ -341,9 +357,27 @@ diff -Nur binutils-2.23.2-old/bfd/archive.c binutils-2.23.2/bfd/archive.c
        status.st_gid = getgid ();
        status.st_mode = 0644;
 EOF
+
+    pushd libiberty >/dev/null || exit 1
+    ./configure || exit 1
+    make -j8 || exit 1
+    popd >/dev/null
+
+    pushd bfd >/dev/null || exit 1
     ./configure || exit 1
     make -j8 || exit 1
     make install || exit 1
+    mkdir tmp >/dev/null
+    pushd tmp >/dev/null
+    $AR x ../../libiberty/libiberty.a
+    $AR x ../libbfd.a
+    $AR r ../libbfd-full.a *.o
+    $RANLIB ../libbfd-full.a
+    install -m 644 ../libbfd-full.a $FRIDA_PREFIX/lib/libbfd.a
+    popd >/dev/null
+    rm -rf tmp
+    popd >/dev/null
+
     popd >/dev/null
     rm -f "${FRIDA_PREFIX}/config.cache"
   fi
