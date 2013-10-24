@@ -164,8 +164,16 @@ function build_sdk ()
   mkdir -p "$BUILDROOT" || exit 1
   pushd "$BUILDROOT" >/dev/null || exit 1
 
-  [ "${FRIDA_TARGET}" = "android" ] && build_iconv
   [ "${FRIDA_TARGET}" = "linux-arm" ] && build_module zlib
+  case $FRIDA_TARGET in
+    linux-*)
+      build_bfd
+      ;;
+    android)
+      build_iconv
+      build_bfd
+      ;;
+  esac
   build_module libffi $(expand_target $FRIDA_TARGET)
   build_module glib
   build_module libgee
@@ -263,7 +271,7 @@ function build_iconv ()
 {
   if [ ! -d "libiconv-1.14" ]; then
     curl "http://gnuftp.uib.no/libiconv/libiconv-1.14.tar.gz" | tar x
-    pushd libiconv-1.14 >/dev/null || exit 1
+    pushd "libiconv-1.14" >/dev/null || exit 1
     patch -p1 << EOF
 --- libiconv/Makefile.in	2009-06-21 19:17:33.000000000 +0800
 +++ libiconv/Makefile.in	2011-10-13 22:51:46.000000000 +0800
@@ -305,6 +313,35 @@ function build_iconv ()
  	cd libcharset && \$(MAKE) installdirs prefix='\$(prefix)' exec_prefix='\$(exec_prefix)' libdir='\$(libdir)'
 EOF
     FRIDA_LEGACY_AUTOTOOLS=1 ./configure --enable-static --enable-relocatable --disable-rpath || exit 1
+    make -j8 || exit 1
+    make install || exit 1
+    popd >/dev/null
+    rm -f "${FRIDA_PREFIX}/config.cache"
+  fi
+}
+
+function build_bfd ()
+{
+  if [ ! -d "binutils-2.23.2" ]; then
+    curl "http://gnuftp.uib.no/binutils/binutils-2.23.2.tar.bz2" | tar x
+    pushd "binutils-2.23.2/bfd" >/dev/null || exit 1
+    patch -p2 << EOF
+diff -Nur binutils-2.23.2-old/bfd/archive.c binutils-2.23.2/bfd/archive.c
+--- binutils-2.23.2-old/bfd/archive.c	2013-03-25 09:06:19.000000000 +0100
++++ binutils-2.23.2/bfd/archive.c	2013-10-24 21:48:30.000000000 +0200
+@@ -1863,7 +1863,9 @@
+     {
+       /* Assume we just "made" the member, and fake it.  */
+       struct bfd_in_memory *bim = (struct bfd_in_memory *) member->iostream;
+-      time (&status.st_mtime);
++      time_t t;
++      time (&t);
++      status.st_mtime = t;
+       status.st_uid = getuid ();
+       status.st_gid = getgid ();
+       status.st_mode = 0644;
+EOF
+    ./configure || exit 1
     make -j8 || exit 1
     make install || exit 1
     popd >/dev/null
