@@ -89,7 +89,7 @@ function expand_target ()
       echo i686-apple-darwin
     ;;
     mac64)
-      echo x86_64-apple-darwin12.3.0
+      echo x86_64-apple-darwin$(uname -r)
     ;;
     ios)
       echo arm-apple-darwin
