@@ -37,6 +37,7 @@ echo $PXE_HOSTNAME > $CHROOT/etc/hostname
 cat <<EOT > $CHROOT/etc/fstab
 /proc    /proc    proc    defaults   0 0
 /sys     /sys     sysfs   defaults   0 0
+devpts   /dev/pts devpts  gid=5,mode=620  0 0
 none            /tmp            tmpfs   defaults        0       0
 # none            /run          tmpfs   defaults        0       0
 none            /var/lock       tmpfs   defaults        0       0
