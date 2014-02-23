@@ -1,0 +1,7 @@
+/__build__
+/glib
+/json-glib
+/libffi
+/libgee
+/vala
+/zlib-*
