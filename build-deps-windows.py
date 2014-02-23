@@ -25,8 +25,8 @@ def build_v8(platform, configuration, runtime):
     headers = v8_headers(platform, configuration)
     base = v8_library("v8_base.%(arch)s", platform, configuration, runtime)
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
-    if not os.path.exists(base[0][1]):
-        perform(GIT, "clean", "-xffd")
+    if not os.path.exists(snapshot[0][1]):
+        perform(GIT, "clean", "-xffd", cwd=v8_dir)
         perform(PYTHON2, os.path.join(v8_dir, "build", "gyp_v8"),
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_enable_i18n_support=0",
@@ -59,9 +59,9 @@ def v8_library(name_template, platform, configuration, runtime):
         files.append((intermediate, output))
     return files
 
-def perform(*args):
+def perform(*args, **kwargs):
     print " ".join(args)
-    subprocess.check_call(args)
+    subprocess.check_call(args, **kwargs)
 
 
 if __name__ == '__main__':
