@@ -6,3 +6,5 @@
 /v8
 /vala
 /zlib-*
+/sdk-windows-*.exe
+/toolchain-windows-*.exe
