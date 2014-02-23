@@ -31,9 +31,12 @@ def build_v8(platform, configuration, runtime):
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_enable_i18n_support=0",
             "-Dv8_msvcrt=" + runtime)
-        perform(DEVENV, "/build", configuration, os.path.join(v8_dir, "build", "all.sln"))
+        perform(DEVENV, os.path.join(v8_dir, "build", "all.sln"),
+            "/build", configuration,
+            "/project", "v8_snapshot",
+            "/projectconfig", configuration)
         for src, dst in headers + base + snapshot:
-            shutil.copyfile(src, dst)
+            copy(src, dst)
 
 def v8_headers(platform, configuration):
     files = []
@@ -62,6 +65,12 @@ def v8_library(name_template, platform, configuration, runtime):
 def perform(*args, **kwargs):
     print " ".join(args)
     subprocess.check_call(args, **kwargs)
+
+def copy(src, dst):
+    dst_dir = os.path.dirname(dst)
+    if not os.path.isdir(dst_dir):
+        os.makedirs(dst_dir)
+    shutil.copyfile(src, dst)
 
 
 if __name__ == '__main__':
