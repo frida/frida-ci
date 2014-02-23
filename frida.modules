@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<moduleset>
+  <!-- Repositories -->
+  <repository type="git" name="frida-github" href="git://github.com/frida/"/>
+
+  <!-- Buildable Modules -->
+  <hsbuildmodule id="zlib">
+    <tarball href="http://zlib.net/zlib-1.2.8.tar.gz" version="1.2.8">
+      <patches>
+        <patch uri="https://raw.github.com/frida/frida-ci/master/patches/zlib-1.2.8.patch" />
+      </patches>
+    </tarball>
+  </hsbuildmodule>
+  <hsbuildmodule id="libffi">
+    <branch repo="frida-github" />
+  </hsbuildmodule>
+  <hsbuildmodule id="glib" projects="glib.sln">
+    <branch repo="frida-github" />
+    <dependencies>
+      <dep package="zlib" />
+      <dep package="libffi" />
+    </dependencies>
+  </hsbuildmodule>
+  <hsbuildmodule id="vala" projects="vala.sln">
+    <branch repo="frida-github" />
+    <dependencies>
+      <dep package="glib" />
+    </dependencies>
+  </hsbuildmodule>
+  <hsbuildmodule id="libgee">
+    <branch repo="frida-github" />
+    <dependencies>
+      <dep package="glib" />
+    </dependencies>
+  </hsbuildmodule>
+  <hsbuildmodule id="json-glib">
+    <branch repo="frida-github" />
+    <dependencies>
+      <dep package="glib" />
+    </dependencies>
+  </hsbuildmodule>
+</moduleset>

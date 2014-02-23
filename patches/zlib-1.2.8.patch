@@ -1,0 +1,81 @@
+--- empty	Thu Jan 07 02:21:18 2010
++++ zlib.hsproj	Mon Dec 28 15:27:15 2009
+@@ -0,0 +1,78 @@
++<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <PropertyGroup>
++    <ProjectGuid>{0D3402C8-26C1-43E6-8644-8FA0E816EE4D}</ProjectGuid>
++    <OutputType>lib</OutputType>
++    <AssemblyName>z</AssemblyName>
++  </PropertyGroup>
++
++  <Import Project="$(MSBuildExtensionsPath)\HSBuild\HSBuild.C.Default.props" />
++
++  <PropertyGroup>
++    <VersionMajor>1</VersionMajor>
++    <VersionMinor>2</VersionMinor>
++    <VersionMicro>8</VersionMicro>
++    <Version>$(VersionMajor).$(VersionMinor).$(VersionMicro)</Version>
++
++    <DisableConfigHeaderGeneration>true</DisableConfigHeaderGeneration>
++  </PropertyGroup>
++
++  <Import Project="$(MSBuildExtensionsPath)\HSBuild\HSBuild.C.props" />
++  <Import Project="$(MSBuildExtensionsPath)\HSBuild\Frida.props" />
++
++  <ItemDefinitionGroup>
++    <Link>
++      <ModuleDefinitionFile>win32/zlib.def</ModuleDefinitionFile>
++    </Link>
++  </ItemDefinitionGroup>
++
++  <ItemGroup>
++    <InstallPkgConfig Include="$(IntDir)zlib.pc.in" />
++
++    <ClCompile Include="adler32.c" />
++    <ClCompile Include="compress.c" />
++    <ClCompile Include="crc32.c" />
++    <ClCompile Include="deflate.c" />
++    <ClCompile Include="gzclose.c" />
++    <ClCompile Include="gzlib.c" />
++    <ClCompile Include="gzread.c" />
++    <ClCompile Include="gzwrite.c" />
++    <ClCompile Include="infback.c" />
++    <ClCompile Include="inffast.c" />
++    <ClCompile Include="inflate.c" />
++    <ClCompile Include="inftrees.c" />
++    <ClCompile Include="trees.c" />
++    <ClCompile Include="uncompr.c" />
++    <ClCompile Include="zutil.c" />
++
++    <InstallInclude Include="zlib.h" />
++    <InstallInclude Include="zconf.h" />
++  </ItemGroup>
++
++  <Import Project="$(MSBuildExtensionsPath)\HSBuild\HSBuild.C.targets" />
++
++  <Target
++    Name="BeforeBuild"
++    >
++      <ItemGroup>
++        <ZLibPCInFileLine Include="prefix=@prefix@" />
++        <ZLibPCInFileLine Include="exec_prefix=@exec_prefix@" />
++        <ZLibPCInFileLine Include="libdir=@libdir@" />
++        <ZLibPCInFileLine Include="includedir=@includedir@" />
++        <ZLibPCInFileLine Include=";" />
++        <ZLibPCInFileLine Include="Name: zlib" />
++        <ZLibPCInFileLine Include="Description: Standard (de)compression library" />
++        <ZLibPCInFileLine Include="Version: @VERSION@" />
++        <ZLibPCInFileLine Include="Libs: -L${libdir} -lz" />
++        <ZLibPCInFileLine Include="Cflags: -I${includedir}" />
++      </ItemGroup>
++
++      <WriteLinesToFile
++        File="$(IntDir)zlib.pc.in"
++        Lines="@(ZLibPCInFileLine)"
++        Overwrite="true"
++        />
++
++  </Target>
++</Project>
++
