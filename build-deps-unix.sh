@@ -52,7 +52,7 @@ FRIDA_PREFIX="$FRIDA_BUILD/frida-$FRIDA_TARGET"
 
 BUILDROOT="$FRIDA_BUILD/tmp-$FRIDA_TARGET/deps"
 
-REPO_BASE_URL="git://gitorious.org/frida"
+REPO_BASE_URL="git://github.com/frida"
 REPO_SUFFIX=".git"
 
 function sed_inplace ()
@@ -91,7 +91,7 @@ function expand_target ()
     mac64)
       echo x86_64-apple-darwin$(uname -r)
     ;;
-    ios)
+    ios-arm)
       echo arm-apple-darwin
     ;;
   esac
@@ -195,7 +195,7 @@ function make_sdk_package ()
   popd >/dev/null
 
   pushd "$FRIDA_PREFIX" >/dev/null || exit 1
-  if [ "$FRIDA_TARGET" = "ios" ]; then
+  if [ "$FRIDA_TARGET" = "ios-arm" ]; then
     cp /System/Library/Frameworks/Kernel.framework/Versions/A/Headers/mach/mach_vm.h include/frida_mach_vm.h
   fi
   tar c \
@@ -245,7 +245,7 @@ function build_module ()
         source $CONFIG_SITE
         CC=${ac_tool_prefix}gcc ./configure --static --prefix=${FRIDA_PREFIX}
       )
-    elif [ "$1" = "libffi" -a "$FRIDA_TARGET" = "ios" ]; then
+    elif [ "$1" = "libffi" -a "$FRIDA_TARGET" = "ios-arm" ]; then
       CC="${IOS_DEVROOT}/usr/bin/llvm-gcc-4.2" ./configure || exit 1
     elif [ -f "autogen.sh" ]; then
       ./autogen.sh || exit 1
@@ -388,11 +388,6 @@ function build_v8_generic ()
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" LD="$CXX" make $target GYPFLAGS="$flags" V=1
 }
 
-function build_v8_ios ()
-{
-  PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" CC="${IOS_DEVROOT}/usr/bin/llvm-gcc-4.2" CXX="${IOS_DEVROOT}/usr/bin/llvm-g++-4.2" OBJC="${IOS_DEVROOT}/usr/bin/llvm-gcc-4.2" LD="${IOS_DEVROOT}/usr/bin/llvm-g++-4.2" make $target GYPFLAGS="$flags" V=1
-}
-
 function build_v8_linux_arm ()
 {
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" CC=arm-linux-gnueabi-gcc CXX=arm-linux-gnueabi-g++ LINK=arm-linux-gnueabi-g++ CFLAGS="" CXXFLAGS="" LDFLAGS="" make arm.release V=1
@@ -404,42 +399,39 @@ function build_v8 ()
     git clone "${REPO_BASE_URL}/v8${REPO_SUFFIX}" || exit 1
     pushd v8 >/dev/null || exit 1
 
-    if [ "$FRIDA_TARGET" = "mac64" ]; then
-      sed_inplace -e "s,\['i386'\]),['x86_64']),g" build/gyp/pylib/gyp/xcode_emulation.py
-    fi
-
     flavor=v8_snapshot
     if [ "$FRIDA_TARGET" = "linux-arm" ]; then
       build_v8_linux_arm
       find out -name "*.target-arm.mk" -exec sed -i -e "s,-m32,,g" {} \;
       build_v8_linux_arm || exit 1
-      target=arm.release
+      arch=arm
     else
+      flags="-Dv8_enable_gdbjit=0 -Dv8_enable_i18n_support=0"
       case $FRIDA_TARGET in
         linux-x86_32)
-          target=ia32.release
-          flags="-f make-linux -D host_os=$build_os"
+          arch=ia32
+          flags="-f make-linux -D host_os=$build_os $flags"
         ;;
         linux-x86_64)
-          target=x64.release
-          flags="-f make-linux -D host_os=$build_os"
+          arch=x64
+          flags="-f make-linux -D host_os=$build_os $flags"
         ;;
         android)
-          target=android_arm.release
-          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot='false'"
+          arch=arm
+          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot='false' $flags"
           flavor=v8_nosnapshot
         ;;
         mac32)
-          target=ia32.release
-          flags="-f make-mac -D host_os=$build_os"
+          arch=ia32
+          flags="-f make-mac -D host_os=$build_os $flags"
         ;;
         mac64)
-          target=x64.release
-          flags="-f make-mac -D host_os=$build_os"
+          arch=x64
+          flags="-f make-mac -D host_os=$build_os $flags"
         ;;
-        ios)
-          target=arm.release
-          flags="-f make-mac -D host_os=$build_os"
+        ios-arm)
+          arch=arm
+          flags="-f make-ios -D host_os=$build_os $flags"
           flavor=v8_nosnapshot
         ;;
         *)
@@ -447,11 +439,9 @@ function build_v8 ()
           exit 1
         ;;
       esac
-      if [ "$FRIDA_TARGET" = "ios" ]; then
-        build_v8_ios || exit 1
-      else
-        build_v8_generic || exit 1
-      fi
+      target=${arch}.release
+
+      build_v8_generic || exit 1
     fi
 
     case $FRIDA_TARGET in
@@ -467,7 +457,7 @@ function build_v8 ()
     install -m 644 include/* $FRIDA_PREFIX/include
 
     install -d $FRIDA_PREFIX/lib
-    install -m 644 $outdir/libv8_base.a $FRIDA_PREFIX/lib
+    install -m 644 $outdir/libv8_base.${arch}.a $FRIDA_PREFIX/lib
     install -m 644 $outdir/lib${flavor}.a $FRIDA_PREFIX/lib
 
     install -d $FRIDA_PREFIX/lib/pkgconfig
@@ -479,8 +469,8 @@ includedir=\${prefix}/include
 
 Name: V8
 Description: V8 JavaScript Engine
-Version: 3.13.3.1
-Libs: -L\${libdir} -lv8_base -l${flavor}
+Version: 3.25.2.0
+Libs: -L\${libdir} -lv8_base.${arch} -l${flavor}
 Cflags: -I\${includedir}
 EOF
 
