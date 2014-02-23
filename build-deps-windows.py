@@ -146,9 +146,9 @@ def package():
     prevdir = os.getcwd()
     os.chdir(tempdir)
 
-    perform(SZIP, "a", "-mx", "-sfx7zCon.sfx", "-r", toolchain_path, "toolchain-windows")
+    perform(SZIP, "a", "-mx9", "-sfx7zCon.sfx", "-r", toolchain_path, "toolchain-windows")
 
-    perform(SZIP, "a", "-mx", "-sfx7zCon.sfx", "-r", sdk_path, "sdk-windows")
+    perform(SZIP, "a", "-mx9", "-sfx7zCon.sfx", "-r", sdk_path, "sdk-windows")
 
     os.chdir(prevdir)
     shutil.rmtree(tempdir)
