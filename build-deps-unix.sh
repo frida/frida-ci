@@ -245,8 +245,6 @@ function build_module ()
         source $CONFIG_SITE
         CC=${ac_tool_prefix}gcc ./configure --static --prefix=${FRIDA_PREFIX}
       )
-    elif [ "$1" = "libffi" -a "$FRIDA_TARGET" = "ios-arm" ]; then
-      CC="${IOS_DEVROOT}/usr/bin/llvm-gcc-4.2" ./configure || exit 1
     elif [ -f "autogen.sh" ]; then
       ./autogen.sh || exit 1
     else
@@ -418,21 +416,20 @@ function build_v8 ()
         ;;
         android)
           arch=arm
-          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot='false' $flags"
+          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot=false $flags"
           flavor=v8_nosnapshot
         ;;
         mac32)
           arch=ia32
-          flags="-f make-mac -D host_os=$build_os $flags"
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 $flags"
         ;;
         mac64)
           arch=x64
-          flags="-f make-mac -D host_os=$build_os $flags"
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 $flags"
         ;;
         ios-arm)
           arch=arm
-          flags="-f make-ios -D host_os=$build_os $flags"
-          flavor=v8_nosnapshot
+          flags="-f make-mac -D host_os=$build_os -D ios_deployment_target=6.0 $flags"
         ;;
         *)
           echo "FIXME"
