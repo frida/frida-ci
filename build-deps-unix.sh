@@ -268,7 +268,7 @@ function build_module ()
 function build_iconv ()
 {
   if [ ! -d "libiconv-1.14" ]; then
-    curl "http://gnuftp.uib.no/libiconv/libiconv-1.14.tar.gz" | tar x
+    curl "http://gnuftp.uib.no/libiconv/libiconv-1.14.tar.gz" | tar xz
     pushd "libiconv-1.14" >/dev/null || exit 1
     patch -p1 << EOF
 --- libiconv/Makefile.in	2009-06-21 19:17:33.000000000 +0800
@@ -321,7 +321,7 @@ EOF
 function build_bfd ()
 {
   if [ ! -d "binutils-2.23.2" ]; then
-    curl "http://gnuftp.uib.no/binutils/binutils-2.23.2.tar.bz2" | tar x
+    curl "http://gnuftp.uib.no/binutils/binutils-2.23.2.tar.bz2" | tar xj
     pushd "binutils-2.23.2" >/dev/null || exit 1
     patch -p1 << EOF
 diff -Nur binutils-2.23.2-old/libiberty/getpagesize.c binutils-2.23.2/libiberty/getpagesize.c
@@ -408,11 +408,11 @@ function build_v8 ()
       case $FRIDA_TARGET in
         linux-x86_32)
           arch=ia32
-          flags="-f make-linux -D host_os=$build_os $flags"
+          flags="-f make-linux -D host_os=$build_os -D werror='' $flags"
         ;;
         linux-x86_64)
           arch=x64
-          flags="-f make-linux -D host_os=$build_os $flags"
+          flags="-f make-linux -D host_os=$build_os -D werror='' $flags"
         ;;
         android)
           arch=arm
