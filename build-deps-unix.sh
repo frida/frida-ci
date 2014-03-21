@@ -94,7 +94,7 @@ function expand_target ()
     ios-arm)
       echo arm-apple-darwin
     ;;
-    ios-a64)
+    ios-arm64)
       echo aarch64-apple-darwin
     ;;
   esac
@@ -198,7 +198,7 @@ function make_sdk_package ()
   popd >/dev/null
 
   pushd "$FRIDA_PREFIX" >/dev/null || exit 1
-  if [ "$FRIDA_TARGET" = "ios-arm" -o "$FRIDA_TARGET" = "ios-a64" ]; then
+  if [ "$FRIDA_TARGET" = "ios-arm" -o "$FRIDA_TARGET" = "ios-arm64" ]; then
     cp /System/Library/Frameworks/Kernel.framework/Versions/A/Headers/mach/mach_vm.h include/frida_mach_vm.h
   fi
   tar c \
