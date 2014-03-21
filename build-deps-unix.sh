@@ -386,6 +386,11 @@ EOF
 
 function build_v8_generic ()
 {
+  if [ "${build_os}" = "mac" ]; then
+    export CXX_host="$CXX -stdlib=libc++"
+  else
+    export CXX_host="$CXX"
+  fi
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" LD="$CXX" make $target GYPFLAGS="$flags" V=1
 }
 
@@ -407,15 +412,15 @@ function build_v8 ()
       build_v8_linux_arm || exit 1
       arch=arm
     else
-      flags="-Dv8_enable_gdbjit=0 -Dv8_enable_i18n_support=0"
+      flags="-D werror='' -Dv8_enable_gdbjit=0 -Dv8_enable_i18n_support=0"
       case $FRIDA_TARGET in
         linux-x86_32)
           arch=ia32
-          flags="-f make-linux -D host_os=$build_os -D werror='' $flags"
+          flags="-f make-linux -D host_os=$build_os $flags"
         ;;
         linux-x86_64)
           arch=x64
-          flags="-f make-linux -D host_os=$build_os -D werror='' $flags"
+          flags="-f make-linux -D host_os=$build_os $flags"
         ;;
         android)
           arch=arm
@@ -424,19 +429,19 @@ function build_v8 ()
         ;;
         mac32)
           arch=ia32
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 $flags"
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D clang=1 $flags"
         ;;
         mac64)
           arch=x64
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 $flags"
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D clang=1 $flags"
         ;;
         ios-arm)
           arch=arm
-          flags="-f make-mac -D host_os=$build_os -D ios_deployment_target=6.0 $flags"
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
         ;;
-        ios-a64)
-          arch=a64
-          flags="-f make-mac -D host_os=$build_os -D ios_deployment_target=6.0 $flags"
+        ios-arm64)
+          arch=arm64
+          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
         ;;
         *)
           echo "FIXME"
