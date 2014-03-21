@@ -478,7 +478,7 @@ includedir=\${prefix}/include
 
 Name: V8
 Description: V8 JavaScript Engine
-Version: 3.25.2.0
+Version: 3.25.22.1
 Libs: -L\${libdir} -lv8_base.${arch} -l${flavor}
 Cflags: -I\${includedir}
 EOF
