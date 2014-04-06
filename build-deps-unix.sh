@@ -250,6 +250,9 @@ function build_module ()
       )
     elif [ -f "autogen.sh" ]; then
       ./autogen.sh || exit 1
+      if [ "$1" = "libffi" ]; then
+        ./configure || exit 1
+      fi
     else
       ./configure || exit 1
     fi
