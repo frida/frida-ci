@@ -29,19 +29,18 @@ fi
 info "Creating new base directory $CHROOT"
 mkdir $CHROOT
 
-#debootstrap precise $CHROOT http://archive.ubuntu.com/ubuntu
 debootstrap squeeze $CHROOT http://ftp.debian.org/debian
 
 echo $PXE_HOSTNAME > $CHROOT/etc/hostname
 
 cat <<EOT > $CHROOT/etc/fstab
-/proc    /proc    proc    defaults   0 0
-/sys     /sys     sysfs   defaults   0 0
-devpts   /dev/pts devpts  gid=5,mode=620  0 0
-none            /tmp            tmpfs   defaults        0       0
-# none            /run          tmpfs   defaults        0       0
-none            /var/lock       tmpfs   defaults        0       0
-none            /var/tmp        tmpfs   defaults        0       0
+/proc	/proc		proc	defaults		0 0
+/sys	/sys		sysfs	defaults		0 0
+devpts	/dev/pts	devpts	gid=5,mode=620		0 0
+none	/tmp		tmpfs	defaults		0 0
+none	/var/lock	tmpfs	defaults		0 0
+none	/var/tmp	tmpfs	defaults		0 0
+none	/dev/shm	tmpfs	rw,nosuid,nodev,noexec	0 0
 EOT
 
 mount -o bind /proc $CHROOT/proc
