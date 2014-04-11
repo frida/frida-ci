@@ -89,7 +89,7 @@ def v8_library(name_template, platform, configuration, runtime):
         lib_dir_name = "lib-dynamic"
     else:
         lib_dir_name = "lib"
-    intermediate_lib_dir = os.path.join(v8_dir, "build", configuration, "lib")
+    intermediate_lib_dir = os.path.join(v8_dir, "build", configuration)
     output_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, lib_dir_name)
     for suffix in ('lib', 'pdb'):
         filename = name + "." + suffix
