@@ -390,9 +390,14 @@ EOF
 function build_v8_generic ()
 {
   if [ "${build_os}" = "mac" ]; then
-    export CXX_host="$CXX -stdlib=libc++"
-  else
+    export LINK="$CXX -stdlib=libc++"
+    export CXX="$CXX -stdlib=libc++"
     export CXX_host="$CXX"
+    export CXX_target="$CXX"
+  else
+    export LINK="$CXX"
+    export CXX_host="$CXX"
+    export CXX_target="$CXX"
   fi
   PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" LD="$CXX" make $target GYPFLAGS="$flags" V=1
 }
