@@ -82,7 +82,7 @@ function expand_target ()
     linux-x86_64)
       echo x86_64-pc-linux-gnu
     ;;
-    android)
+    android-arm)
       echo armv7-none-linux-androideabi
     ;;
     mac32)
@@ -172,7 +172,7 @@ function build_sdk ()
     linux-*)
       build_bfd
       ;;
-    android)
+    android-*)
       build_iconv
       build_bfd
       ;;
@@ -390,21 +390,50 @@ EOF
 function build_v8_generic ()
 {
   if [ "${build_os}" = "mac" ]; then
-    export LINK="$CXX -stdlib=libc++"
-    export CXX="$CXX -stdlib=libc++"
-    export CXX_host="$CXX"
-    export CXX_target="$CXX"
+    case $FRIDA_TARGET in
+      android-*)
+        PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+          MACOSX_DEPLOYMENT_TARGET="" \
+          CXX="$CXX" \
+          CXX_host="$(xcrun --sdk macosx10.9 -f clang++) -stdlib=libc++" \
+          CXX_target="$CXX" \
+          LINK="$CXX" \
+          LINK_host="$(xcrun --sdk macosx10.9 -f clang++) -stdlib=libc++" \
+          CFLAGS="" \
+          CXXFLAGS="" \
+          CPPFLAGS="" \
+          LDFLAGS="" \
+          make $target GYPFLAGS="$flags" V=1
+      ;;
+      *)
+        PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+          MACOSX_DEPLOYMENT_TARGET="" \
+          CXX="$CXX -stdlib=libc++" \
+          CXX_host="$CXX -stdlib=libc++" \
+          CXX_target="$CXX -stdlib=libc++" \
+          LINK="$CXX -stdlib=libc++" \
+          make $target GYPFLAGS="$flags" V=1
+      ;;
+    esac
   else
-    export LINK="$CXX"
-    export CXX_host="$CXX"
-    export CXX_target="$CXX"
+    PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+      CXX_host="$CXX" \
+      CXX_target="$CXX" \
+      LINK="$CXX" \
+      make $target GYPFLAGS="$flags" V=1
   fi
-  PATH="/usr/bin:/bin:/usr/sbin:/sbin" MACOSX_DEPLOYMENT_TARGET="" LD="$CXX" make $target GYPFLAGS="$flags" V=1
 }
 
 function build_v8_linux_arm ()
 {
-  PATH="/usr/bin:/bin:/usr/sbin:/sbin" CC=arm-linux-gnueabi-gcc CXX=arm-linux-gnueabi-g++ LINK=arm-linux-gnueabi-g++ CFLAGS="" CXXFLAGS="" LDFLAGS="" make arm.release V=1
+  PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+    CC=arm-linux-gnueabi-gcc \
+    CXX=arm-linux-gnueabi-g++ \
+    LINK=arm-linux-gnueabi-g++ \
+    CFLAGS="" \
+    CXXFLAGS="" \
+    LDFLAGS="" \
+    make arm.release V=1
 }
 
 function build_v8 ()
@@ -413,7 +442,7 @@ function build_v8 ()
     git clone "${REPO_BASE_URL}/v8${REPO_SUFFIX}" || exit 1
     pushd v8 >/dev/null || exit 1
 
-    flavor=v8_snapshot
+    flavor_prefix=
     if [ "$FRIDA_TARGET" = "linux-arm" ]; then
       build_v8_linux_arm
       find out -name "*.target-arm.mk" -exec sed -i -e "s,-m32,,g" {} \;
@@ -430,10 +459,10 @@ function build_v8 ()
           arch=x64
           flags="-f make-linux -D host_os=$build_os $flags"
         ;;
-        android)
+        android-arm)
+          flavor_prefix=android_
           arch=arm
-          flags="-f make-linux -D host_os=$build_os -D v8_use_snapshot=false $flags"
-          flavor=v8_nosnapshot
+          flags="-f make-android -D host_os=$build_os -D clang=1 $flags"
         ;;
         mac32)
           arch=ia32
@@ -456,13 +485,13 @@ function build_v8 ()
           exit 1
         ;;
       esac
-      target=${arch}.release
+      target=${flavor_prefix}${arch}.release
 
       build_v8_generic || exit 1
     fi
 
     case $FRIDA_TARGET in
-      linux-*|android)
+      linux-*)
         outdir=out/$target/obj.target/tools/gyp
       ;;
       *)
@@ -475,7 +504,7 @@ function build_v8 ()
 
     install -d $FRIDA_PREFIX/lib
     install -m 644 $outdir/libv8_base.${arch}.a $FRIDA_PREFIX/lib
-    install -m 644 $outdir/lib${flavor}.a $FRIDA_PREFIX/lib
+    install -m 644 $outdir/libv8_snapshot.a $FRIDA_PREFIX/lib
 
     install -d $FRIDA_PREFIX/lib/pkgconfig
     cat > $FRIDA_PREFIX/lib/pkgconfig/v8.pc << EOF
@@ -487,7 +516,7 @@ includedir=\${prefix}/include
 Name: V8
 Description: V8 JavaScript Engine
 Version: 3.26.6.1
-Libs: -L\${libdir} -lv8_base.${arch} -l${flavor}
+Libs: -L\${libdir} -lv8_base.${arch} -lv8_snapshot
 Cflags: -I\${includedir}
 EOF
 
