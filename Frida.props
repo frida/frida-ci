@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'== 'Debug'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        G_ENABLE_DEBUG;
+        GTK_ENABLE_DEBUG;
+      </PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'!= 'Debug'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+
+      <Optimization>MinSize</Optimization>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization> <!-- not yet supported, set in AdditionalOptions for now -->
+      <BasicRuntimeChecks>Disabled</BasicRuntimeChecks>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+
+      <AdditionalClOptions>%(AdditionalClOptions);/GL;/Oy</AdditionalClOptions>
+
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        G_DISABLE_ASSERT;
+        G_DISABLE_CAST_CHECKS;
+        G_DISABLE_CHECKS;
+      </PreprocessorDefinitions>
+    </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration>NOSTATUS</LinkTimeCodeGeneration>
+    </Lib>
+    <Link>
+      <LinkTimeCodeGeneration>NOSTATUS</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+
+      <AdditionalLinkOptions>%(AdditionalLinkOptions);/OPT:REF,ICF</AdditionalLinkOptions>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'!= 'Debug'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        WINVER=0x0601;
+        _WIN32_WINNT=0x0601;
+      </PreprocessorDefinitions>
+    </ClCompile>
+    <Package>
+      <StaticLinking>true</StaticLinking>
+    </Package>
+  </ItemDefinitionGroup>
+
+</Project>
