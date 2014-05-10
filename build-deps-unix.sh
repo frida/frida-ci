@@ -11,12 +11,11 @@ if [ -z "$CONFIG_SITE" ]; then
   exit 1
 fi
 
-build_os=$(uname -s | tr '[A-Z]' '[a-z]')
-[ "$build_os" = 'darwin' ] && build_os=mac
+build_platform=$(uname -s | tr '[A-Z]' '[a-z]' | sed 's,^darwin$$,mac,')
 
-case $build_os in
+case $build_platform in
   linux)
-    download_command="wget -O - -nv"
+    download_command="wget -O - -q"
     tar_stdin=""
     ;;
   mac)
@@ -24,40 +23,42 @@ case $build_os in
     tar_stdin="-"
     ;;
   *)
-    echo "Could not determine build OS" > /dev/stderr
+    echo "Could not determine build platform" > /dev/stderr
     exit 1
 esac
 
+if [ -n $FRIDA_HOST ]; then
+  host_platform=$(echo -n $FRIDA_HOST | sed 's,\([a-z]\+\)-\(.\+\),\1,g')
+else
+  host_platform=$build_platform
+fi
+if [ $host_platform = 'linux' ]; then
+  host_distro=$(lsb_release -is | tr '[A-Z]' '[a-z]')_$(lsb_release -cs)
+else
+  host_distro=all
+fi
+if [ -n $FRIDA_HOST ]; then
+  host_arch=$(echo -n $FRIDA_HOST | sed 's,\([a-z]\+\)-\(.\+\),\2,g')
+else
+  host_arch=$(uname -m)
+fi
+host_platform_arch=${host_platform}-${host_arch}
+
 if [ -z $FRIDA_HOST ]; then
-  if [ $build_os = 'linux' ]; then
-    case $(uname -m) in
-      x86_64)
-        FRIDA_HOST=linux-x86_64
-      ;;
-      i686)
-        FRIDA_HOST=linux-x86_32
-      ;;
-      *)
-      echo "Could not automatically determine architecture" > /dev/stderr
-      exit 1
-    esac
-  else
-    FRIDA_HOST=mac64
-  fi
-  echo "Assuming target is $FRIDA_HOST. Set FRIDA_HOST to override."
+  echo "Assuming host is $host_platform_arch Set FRIDA_HOST to override."
 fi
 
 FRIDA_BUILD="$FRIDA_ROOT/build"
-FRIDA_PREFIX="$FRIDA_BUILD/frida-$FRIDA_HOST"
+FRIDA_PREFIX="$FRIDA_BUILD/frida-$host_platform_arch"
 
-BUILDROOT="$FRIDA_BUILD/tmp-$FRIDA_HOST/deps"
+BUILDROOT="$FRIDA_BUILD/tmp-$host_platform_arch/deps"
 
 REPO_BASE_URL="git://github.com/frida"
 REPO_SUFFIX=".git"
 
 function sed_inplace ()
 {
-  if [ "${build_os}" = "mac" ]; then
+  if [ "${build_platform}" = "mac" ]; then
     sed -i "" $*
   else
     sed -i $*
@@ -66,17 +67,17 @@ function sed_inplace ()
 
 function strip_all ()
 {
-  if [ "${build_os}" = "mac" ]; then
+  if [ "${build_platform}" = "mac" ]; then
     strip -Sx $*
   else
     strip --strip-all $*
   fi
 }
 
-function expand_target ()
+function expand_host ()
 {
   case $1 in
-    linux-x86_32)
+    linux-i386)
       echo i686-pc-linux-gnu
     ;;
     linux-x86_64)
@@ -85,10 +86,10 @@ function expand_target ()
     android-arm)
       echo armv7-none-linux-androideabi
     ;;
-    mac32)
+    mac-i386)
       echo i686-apple-darwin
     ;;
-    mac64)
+    mac-x86_64)
       echo x86_64-apple-darwin$(uname -r)
     ;;
     ios-arm)
@@ -123,7 +124,7 @@ function build_toolchain ()
   rm pkg-config
   ln -s *-pkg-config pkg-config
   popd >/dev/null
-  build_module libffi $(expand_target $FRIDA_HOST)
+  build_module libffi $(expand_host $host_platform_arch)
   build_module glib
   build_module vala
 
@@ -134,7 +135,7 @@ function build_toolchain ()
 
 function make_toolchain_package ()
 {
-  local target_filename="$FRIDA_BUILD/toolchain-${build_os}-$(date '+%Y%m%d').tar.bz2"
+  local target_filename="$FRIDA_BUILD/toolchain-${build_platform}-$(date '+%Y%m%d').tar.bz2"
 
   local tooldir="$BUILDROOT/toolchain"
   rm -rf "$tooldir"
@@ -167,17 +168,17 @@ function build_sdk ()
   mkdir -p "$BUILDROOT" || exit 1
   pushd "$BUILDROOT" >/dev/null || exit 1
 
-  [ "${FRIDA_HOST}" = "linux-arm" ] && build_module zlib
-  case $FRIDA_HOST in
-    linux-*)
+  [ "${host_platform_arch}" = "linux-arm" ] && build_module zlib
+  case $host_platform in
+    linux)
       build_bfd
       ;;
-    android-*)
+    android)
       build_iconv
       build_bfd
       ;;
   esac
-  build_module libffi $(expand_target $FRIDA_HOST)
+  build_module libffi $(expand_host $host_platform_arch)
   build_module glib
   build_module libgee
   build_module json-glib
@@ -188,9 +189,9 @@ function build_sdk ()
 
 function make_sdk_package ()
 {
-  local target_filename="$FRIDA_BUILD/sdk-$FRIDA_HOST-$(date '+%Y%m%d').tar.bz2"
+  local target_filename="$FRIDA_BUILD/sdk-$(date '+%Y%m%d')-${host_platform}-${host_distro}-${host_arch}.tar.bz2"
 
-  local sdkname="sdk-$FRIDA_HOST"
+  local sdkname="sdk-$host_platform_arch"
   local sdkdir="$BUILDROOT/$sdkname"
   pushd "$BUILDROOT" >/dev/null || exit 1
   rm -rf "$sdkname"
@@ -198,7 +199,7 @@ function make_sdk_package ()
   popd >/dev/null
 
   pushd "$FRIDA_PREFIX" >/dev/null || exit 1
-  if [ "$FRIDA_HOST" = "ios-arm" -o "$FRIDA_HOST" = "ios-arm64" ]; then
+  if [ "$host_platform" = "ios" ]; then
     cp /System/Library/Frameworks/Kernel.framework/Versions/A/Headers/mach/mach_vm.h include/frida_mach_vm.h
   fi
   tar c \
@@ -389,9 +390,9 @@ EOF
 
 function build_v8_generic ()
 {
-  if [ "${build_os}" = "mac" ]; then
-    case $FRIDA_HOST in
-      android-*)
+  if [ "${build_platform}" = "mac" ]; then
+    case $host_platform in
+      android)
         PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
           MACOSX_DEPLOYMENT_TARGET="" \
           CXX="$CXX" \
@@ -443,42 +444,42 @@ function build_v8 ()
     pushd v8 >/dev/null || exit 1
 
     flavor_prefix=
-    if [ "$FRIDA_HOST" = "linux-arm" ]; then
+    if [ "$host_platform_arch" = "linux-arm" ]; then
       build_v8_linux_arm
       find out -name "*.target-arm.mk" -exec sed -i -e "s,-m32,,g" {} \;
       build_v8_linux_arm || exit 1
       arch=arm
     else
       flags="-D werror='' -Dv8_enable_gdbjit=0 -Dv8_enable_i18n_support=0"
-      case $FRIDA_HOST in
-        linux-x86_32)
+      case $host_platform_arch in
+        linux-i386)
           arch=ia32
-          flags="-f make-linux -D host_os=$build_os $flags"
+          flags="-f make-linux -D host_os=$build_platform $flags"
         ;;
         linux-x86_64)
           arch=x64
-          flags="-f make-linux -D host_os=$build_os $flags"
+          flags="-f make-linux -D host_os=$build_platform $flags"
         ;;
         android-arm)
           flavor_prefix=android_
           arch=arm
-          flags="-f make-android -D host_os=$build_os -D clang=1 $flags"
+          flags="-f make-android -D host_os=$build_platform -D clang=1 $flags"
         ;;
-        mac32)
+        mac-i386)
           arch=ia32
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D clang=1 $flags"
+          flags="-f make-mac -D host_os=$build_platform -D mac_deployment_target=10.7 -D clang=1 $flags"
         ;;
-        mac64)
+        mac-x86_64)
           arch=x64
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D clang=1 $flags"
+          flags="-f make-mac -D host_os=$build_platform -D mac_deployment_target=10.7 -D clang=1 $flags"
         ;;
         ios-arm)
           arch=arm
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
+          flags="-f make-mac -D host_os=$build_platform -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
         ;;
         ios-arm64)
           arch=arm64
-          flags="-f make-mac -D host_os=$build_os -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
+          flags="-f make-mac -D host_os=$build_platform -D mac_deployment_target=10.7 -D ios_deployment_target=7.0 -D clang=1 $flags"
         ;;
         *)
           echo "FIXME"
@@ -490,8 +491,8 @@ function build_v8 ()
       build_v8_generic || exit 1
     fi
 
-    case $FRIDA_HOST in
-      linux-*)
+    case $host_platform in
+      linux)
         outdir=out/$target/obj.target/tools/gyp
       ;;
       *)
