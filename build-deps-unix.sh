@@ -28,29 +28,29 @@ case $build_os in
     exit 1
 esac
 
-if [ -z $FRIDA_TARGET ]; then
+if [ -z $FRIDA_HOST ]; then
   if [ $build_os = 'linux' ]; then
     case $(uname -m) in
       x86_64)
-        FRIDA_TARGET=linux-x86_64
+        FRIDA_HOST=linux-x86_64
       ;;
       i686)
-        FRIDA_TARGET=linux-x86_32
+        FRIDA_HOST=linux-x86_32
       ;;
       *)
       echo "Could not automatically determine architecture" > /dev/stderr
       exit 1
     esac
   else
-    FRIDA_TARGET=mac64
+    FRIDA_HOST=mac64
   fi
-  echo "Assuming target is $FRIDA_TARGET. Set FRIDA_TARGET to override."
+  echo "Assuming target is $FRIDA_HOST. Set FRIDA_HOST to override."
 fi
 
 FRIDA_BUILD="$FRIDA_ROOT/build"
-FRIDA_PREFIX="$FRIDA_BUILD/frida-$FRIDA_TARGET"
+FRIDA_PREFIX="$FRIDA_BUILD/frida-$FRIDA_HOST"
 
-BUILDROOT="$FRIDA_BUILD/tmp-$FRIDA_TARGET/deps"
+BUILDROOT="$FRIDA_BUILD/tmp-$FRIDA_HOST/deps"
 
 REPO_BASE_URL="git://github.com/frida"
 REPO_SUFFIX=".git"
@@ -123,7 +123,7 @@ function build_toolchain ()
   rm pkg-config
   ln -s *-pkg-config pkg-config
   popd >/dev/null
-  build_module libffi $(expand_target $FRIDA_TARGET)
+  build_module libffi $(expand_target $FRIDA_HOST)
   build_module glib
   build_module vala
 
@@ -167,8 +167,8 @@ function build_sdk ()
   mkdir -p "$BUILDROOT" || exit 1
   pushd "$BUILDROOT" >/dev/null || exit 1
 
-  [ "${FRIDA_TARGET}" = "linux-arm" ] && build_module zlib
-  case $FRIDA_TARGET in
+  [ "${FRIDA_HOST}" = "linux-arm" ] && build_module zlib
+  case $FRIDA_HOST in
     linux-*)
       build_bfd
       ;;
@@ -177,7 +177,7 @@ function build_sdk ()
       build_bfd
       ;;
   esac
-  build_module libffi $(expand_target $FRIDA_TARGET)
+  build_module libffi $(expand_target $FRIDA_HOST)
   build_module glib
   build_module libgee
   build_module json-glib
@@ -188,9 +188,9 @@ function build_sdk ()
 
 function make_sdk_package ()
 {
-  local target_filename="$FRIDA_BUILD/sdk-$FRIDA_TARGET-$(date '+%Y%m%d').tar.bz2"
+  local target_filename="$FRIDA_BUILD/sdk-$FRIDA_HOST-$(date '+%Y%m%d').tar.bz2"
 
-  local sdkname="sdk-$FRIDA_TARGET"
+  local sdkname="sdk-$FRIDA_HOST"
   local sdkdir="$BUILDROOT/$sdkname"
   pushd "$BUILDROOT" >/dev/null || exit 1
   rm -rf "$sdkname"
@@ -198,7 +198,7 @@ function make_sdk_package ()
   popd >/dev/null
 
   pushd "$FRIDA_PREFIX" >/dev/null || exit 1
-  if [ "$FRIDA_TARGET" = "ios-arm" -o "$FRIDA_TARGET" = "ios-arm64" ]; then
+  if [ "$FRIDA_HOST" = "ios-arm" -o "$FRIDA_HOST" = "ios-arm64" ]; then
     cp /System/Library/Frameworks/Kernel.framework/Versions/A/Headers/mach/mach_vm.h include/frida_mach_vm.h
   fi
   tar c \
@@ -390,7 +390,7 @@ EOF
 function build_v8_generic ()
 {
   if [ "${build_os}" = "mac" ]; then
-    case $FRIDA_TARGET in
+    case $FRIDA_HOST in
       android-*)
         PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
           MACOSX_DEPLOYMENT_TARGET="" \
@@ -443,14 +443,14 @@ function build_v8 ()
     pushd v8 >/dev/null || exit 1
 
     flavor_prefix=
-    if [ "$FRIDA_TARGET" = "linux-arm" ]; then
+    if [ "$FRIDA_HOST" = "linux-arm" ]; then
       build_v8_linux_arm
       find out -name "*.target-arm.mk" -exec sed -i -e "s,-m32,,g" {} \;
       build_v8_linux_arm || exit 1
       arch=arm
     else
       flags="-D werror='' -Dv8_enable_gdbjit=0 -Dv8_enable_i18n_support=0"
-      case $FRIDA_TARGET in
+      case $FRIDA_HOST in
         linux-x86_32)
           arch=ia32
           flags="-f make-linux -D host_os=$build_os $flags"
@@ -490,7 +490,7 @@ function build_v8 ()
       build_v8_generic || exit 1
     fi
 
-    case $FRIDA_TARGET in
+    case $FRIDA_HOST in
       linux-*)
         outdir=out/$target/obj.target/tools/gyp
       ;;
