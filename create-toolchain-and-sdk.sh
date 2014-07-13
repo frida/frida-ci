@@ -14,9 +14,9 @@ rm -rf valac
 pushd .
 mkdir -p valac
 cd valac
-wget http://download.gnome.org/sources/vala/0.14/vala-0.14.2.tar.xz
-tar Jxvf vala-0.14.2.tar.xz
-cd vala-0.14.2
+wget http://download.gnome.org/sources/vala/0.24/vala-0.24.0.tar.xz
+tar Jxvf vala-0.24.0.tar.xz
+cd vala-0.24.0
 ./configure --prefix=$HOME/apps/valac
 make all install
 popd
@@ -30,7 +30,7 @@ mkdir -p build/toolchain/share/aclocal/
 mkdir -p build/sdk-linux-x86_64/share/aclocal/
 mkdir -p build/toolchain/bin/
 
-ln -sf $HOME/apps/valac/bin/valac-0.14 build/toolchain/bin/valac-0.14
+ln -sf $HOME/apps/valac/bin/valac-0.24 build/toolchain/bin/valac-0.24
 
 export FRIDA_TARGET=linux-x86_64
 ./setup-env.sh
