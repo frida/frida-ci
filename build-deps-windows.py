@@ -106,10 +106,10 @@ def v8_library(name_template, platform, configuration, runtime):
 def package():
     now = datetime.datetime.now()
 
-    toolchain_filename = now.strftime("toolchain-windows-%Y%m%d.exe")
+    toolchain_filename = now.strftime("toolchain-%Y%m%d-windows-i386.exe")
     toolchain_path = os.path.join(ci_dir, toolchain_filename)
 
-    sdk_filename = now.strftime("sdk-windows-%Y%m%d.exe")
+    sdk_filename = now.strftime("sdk-%Y%m%d-windows-any.exe")
     sdk_path = os.path.join(ci_dir, sdk_filename)
 
     if os.path.exists(toolchain_path) and os.path.exists(sdk_path):
