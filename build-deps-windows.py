@@ -57,7 +57,7 @@ def build_hsmodules(platform, configuration):
 
 def build_v8(platform, configuration, runtime):
     if not os.path.exists(v8_dir):
-        perform(GIT, "clone", "git@github.com:frida/v8.git")
+        perform(GIT, "clone", "git://github.com/frida/v8.git")
     headers = v8_headers(platform, configuration)
     base = v8_library("v8_base.%(arch)s", platform, configuration, runtime)
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
