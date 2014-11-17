@@ -27,7 +27,6 @@ case $build_platform in
     exit 1
 esac
 
-set -x
 if [ -n "$FRIDA_HOST" ]; then
   host_platform=$(echo -n $FRIDA_HOST | sed 's,\([a-z]\+\)-\(.\+\),\1,g')
 else
@@ -110,16 +109,16 @@ function build_toolchain ()
   export PATH="$FRIDA_PREFIX/bin":$PATH
   export PKG_CONFIG="$FRIDA_PREFIX/bin/pkg-config"
 
-  build_tarball http://ftp.gnu.org/gnu/m4/m4-1.4.16.tar.gz
+  build_tarball http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz
   build_tarball http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz
-  build_tarball http://ftp.gnu.org/gnu/automake/automake-1.13.1.tar.gz
+  build_tarball http://ftp.gnu.org/gnu/automake/automake-1.14.1.tar.gz
   pushd "$FRIDA_PREFIX/bin" >/dev/null || exit 1
   rm aclocal
-  ln -s aclocal-1.13 aclocal
+  ln -s aclocal-1.14 aclocal
   rm automake
-  ln -s automake-1.13 automake
+  ln -s automake-1.14 automake
   popd >/dev/null
-  build_tarball http://gnuftp.uib.no/libtool/libtool-2.4.2.tar.gz
+  build_tarball http://gnuftp.uib.no/libtool/libtool-2.4.3.tar.gz
   build_tarball http://pkgconfig.freedesktop.org/releases/pkg-config-0.28.tar.gz --with-internal-glib
   pushd "$FRIDA_PREFIX/bin" >/dev/null || exit 1
   rm pkg-config
