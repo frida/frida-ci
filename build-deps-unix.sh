@@ -156,8 +156,8 @@ function make_toolchain_package ()
       . | tar -C "$tooldir" -xf - || exit 1
   popd >/dev/null
 
-  pushd "$BUILDROOT" >/dev/null || exit 1
-  tar cfj "$target_filename" toolchain || exit 1
+  pushd "$BUILDROOT/toolchain" >/dev/null || exit 1
+  tar cfj "$target_filename" . || exit 1
   popd >/dev/null
 
   rm -rf "$tooldir"
