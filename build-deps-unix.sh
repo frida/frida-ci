@@ -11,7 +11,7 @@ if [ -z "$CONFIG_SITE" ]; then
   exit 1
 fi
 
-build_platform=$(uname -s | tr '[A-Z]' '[a-z]' | sed 's,^darwin$$,mac,')
+build_platform=$(uname -s | tr '[A-Z]' '[a-z]' | sed 's,^darwin$,mac,')
 
 case $build_platform in
   linux)
@@ -27,24 +27,25 @@ case $build_platform in
     exit 1
 esac
 
-if [ -n $FRIDA_HOST ]; then
+set -x
+if [ -n "$FRIDA_HOST" ]; then
   host_platform=$(echo -n $FRIDA_HOST | sed 's,\([a-z]\+\)-\(.\+\),\1,g')
 else
   host_platform=$build_platform
 fi
-if [ $host_platform = 'linux' ]; then
+if [ "$host_platform" = "linux" ]; then
   host_distro=$(lsb_release -is | tr '[A-Z]' '[a-z]')_$(lsb_release -cs)
 else
   host_distro=all
 fi
-if [ -n $FRIDA_HOST ]; then
+if [ -n "$FRIDA_HOST" ]; then
   host_arch=$(echo -n $FRIDA_HOST | sed 's,\([a-z]\+\)-\(.\+\),\2,g')
 else
   host_arch=$(uname -m)
 fi
 host_platform_arch=${host_platform}-${host_arch}
 
-if [ -z $FRIDA_HOST ]; then
+if [ -z "$FRIDA_HOST" ]; then
   echo "Assuming host is $host_platform_arch Set FRIDA_HOST to override."
 fi
 
