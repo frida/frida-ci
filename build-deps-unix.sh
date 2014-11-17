@@ -135,7 +135,7 @@ function build_toolchain ()
 
 function make_toolchain_package ()
 {
-  local target_filename="$FRIDA_BUILD/toolchain-${build_platform}-$(date '+%Y%m%d').tar.bz2"
+  local target_filename="$FRIDA_BUILD/toolchain-$(date '+%Y%m%d')-${host_platform_arch}.tar.bz2"
 
   local tooldir="$BUILDROOT/toolchain"
   rm -rf "$tooldir"
