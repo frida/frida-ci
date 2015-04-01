@@ -59,7 +59,9 @@ def build_v8(platform, configuration, runtime):
     if not os.path.exists(v8_dir):
         perform(GIT, "clone", "git://github.com/frida/v8.git")
     headers = v8_headers(platform, configuration)
-    base = v8_library("v8_base.%(arch)s", platform, configuration, runtime)
+    base = v8_library("v8_base", platform, configuration, runtime)
+    libbase = v8_library("v8_libbase", platform, configuration, runtime)
+    libplatform = v8_library("v8_libplatform", platform, configuration, runtime)
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
     if not os.path.exists(snapshot[0][1]):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
@@ -71,7 +73,7 @@ def build_v8(platform, configuration, runtime):
             "/build", configuration,
             "/project", "v8_snapshot",
             "/projectconfig", configuration)
-        for src, dst in headers + base + snapshot:
+        for src, dst in headers + base + libbase + libplatform + snapshot:
             copy(src, dst)
 
 def v8_headers(platform, configuration):
@@ -82,9 +84,8 @@ def v8_headers(platform, configuration):
         files.append((header, os.path.join(output_include_dir, filename)))
     return files
 
-def v8_library(name_template, platform, configuration, runtime):
+def v8_library(name, platform, configuration, runtime):
     files = []
-    name = name_template % {'arch': V8_ARCH[platform]}
     if runtime == 'dynamic':
         lib_dir_name = "lib-dynamic"
     else:
