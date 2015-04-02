@@ -78,10 +78,13 @@ def build_v8(platform, configuration, runtime):
 
 def v8_headers(platform, configuration):
     files = []
-    output_include_dir = os.path.join(ci_dir, "__build__", platform, configuration, "include")
+    output_include_dir = os.path.join(ci_dir, "__build__", platform, configuration, "include", "v8", "include")
     for header in glob.glob(os.path.join(v8_dir, "include", "*.h")):
         filename = os.path.basename(header)
         files.append((header, os.path.join(output_include_dir, filename)))
+    for header in glob.glob(os.path.join(v8_dir, "include", "libplatform", "*.h")):
+        filename = os.path.basename(header)
+        files.append((header, os.path.join(output_include_dir, "libplatform", filename)))
     return files
 
 def v8_library(name, platform, configuration, runtime):
