@@ -52,13 +52,6 @@
   </PropertyGroup>
 
   <ItemDefinitionGroup>
-    <ClCompile>
-      <PreprocessorDefinitions>
-        %(PreprocessorDefinitions);
-        WINVER=0x0601;
-        _WIN32_WINNT=0x0601;
-      </PreprocessorDefinitions>
-    </ClCompile>
     <Package>
       <StaticLinking>true</StaticLinking>
     </Package>
