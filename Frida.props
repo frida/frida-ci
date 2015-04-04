@@ -27,6 +27,11 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 
       <AdditionalClOptions>%(AdditionalClOptions);/GL;/Oy</AdditionalClOptions>
+
+      <PreprocessorDefinitions>
+        %(PreprocessorDefinitions);
+        G_DISABLE_CAST_CHECKS;
+      </PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>NOSTATUS</LinkTimeCodeGeneration>
