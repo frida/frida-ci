@@ -70,6 +70,7 @@ def build_v8(platform, configuration, runtime):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
         perform(PYTHON2, os.path.join(v8_dir, "build", "gyp_v8"),
             "-Dtarget_arch=%s" % V8_ARCH[platform],
+            "-Dv8_use_external_startup_data=0",
             "-Dv8_enable_i18n_support=0",
             "-Dv8_msvcrt=" + runtime)
         perform(DEVENV, os.path.join(v8_dir, "build", "all.sln"),
