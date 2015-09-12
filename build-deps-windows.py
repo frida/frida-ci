@@ -99,7 +99,7 @@ def v8_library(name, platform, configuration, runtime):
         lib_dir_name = "lib"
     intermediate_lib_dir = os.path.join(v8_dir, "build", configuration)
     output_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, lib_dir_name)
-    for suffix in ('lib', 'pdb'):
+    for suffix in ('lib',):
         filename = name + "." + suffix
         intermediate = os.path.join(intermediate_lib_dir, filename)
         output = os.path.join(output_lib_dir, filename)
