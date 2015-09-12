@@ -17,6 +17,7 @@ V8_ARCH = {
     "x86": "ia32",
     "x86_64": "x64"
 }
+V8_BASE_SHARDS = 4
 
 SDK_BLACKLISTED_EXTENSIONS = (
     "exe",
@@ -59,7 +60,9 @@ def build_v8(platform, configuration, runtime):
     if not os.path.exists(v8_dir):
         perform(GIT, "clone", "git://github.com/frida/v8.git")
     headers = v8_headers(platform, configuration)
-    base = v8_library("v8_base", platform, configuration, runtime)
+    base = []
+    for i in range(V8_BASE_SHARDS):
+        base.extend(v8_library("v8_base_%d" % i, platform, configuration, runtime))
     libbase = v8_library("v8_libbase", platform, configuration, runtime)
     libplatform = v8_library("v8_libplatform", platform, configuration, runtime)
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
