@@ -72,7 +72,7 @@ def build_v8(platform, configuration, runtime):
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_use_external_startup_data=0",
             "-Dv8_enable_i18n_support=0",
-            "-Dv8_msvcrt=" + runtime)
+            "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')))
         perform(DEVENV, os.path.join(v8_dir, "build", "all.sln"),
             "/build", configuration,
             "/project", "v8_snapshot",
