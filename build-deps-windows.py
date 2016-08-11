@@ -65,6 +65,7 @@ def build_v8(platform, configuration, runtime):
         base.extend(v8_library("v8_base_%d" % i, platform, configuration, runtime))
     libbase = v8_library("v8_libbase", platform, configuration, runtime)
     libplatform = v8_library("v8_libplatform", platform, configuration, runtime)
+    libsampler = v8_library("v8_libsampler", sampler, configuration, runtime)
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
     if not os.path.exists(snapshot[0][1]):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
@@ -77,7 +78,7 @@ def build_v8(platform, configuration, runtime):
             "/build", configuration,
             "/project", "v8_snapshot",
             "/projectconfig", configuration)
-        for src, dst in headers + base + libbase + libplatform + snapshot:
+        for src, dst in headers + base + libbase + libplatform + libsampler + snapshot:
             copy(src, dst)
 
 def v8_headers(platform, configuration):
