@@ -69,12 +69,15 @@ def build_v8(platform, configuration, runtime):
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
     if not os.path.exists(snapshot[0][1]):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
-        perform(PYTHON2, os.path.join(v8_dir, "build", "gyp_v8"),
+        os.environ['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
+        os.environ['GYP_MSVS_VERSION'] = '2015'
+        os.environ['GYP_GENERATORS'] = 'msvs'
+        perform(PYTHON2, os.path.join(v8_dir, "gypfiles", "gyp_v8"),
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_use_external_startup_data=0",
             "-Dv8_enable_i18n_support=0",
             "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')))
-        perform(DEVENV, os.path.join(v8_dir, "build", "all.sln"),
+        perform(DEVENV, os.path.join(v8_dir, "gypfiles", "all.sln"),
             "/build", configuration,
             "/project", "v8_snapshot",
             "/projectconfig", configuration)
