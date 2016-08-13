@@ -9,7 +9,7 @@ import tempfile
 
 HSBUILD = r"C:\Program Files (x86)\HSBuild\bin\hsbuild.exe"
 DEVENV = r"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.com"
-PYTHON2 = r"C:\Program Files\Python27\python.exe"
+PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
 
