@@ -19,25 +19,19 @@
 
       <Optimization>MinSize</Optimization>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <WholeProgramOptimization>true</WholeProgramOptimization> <!-- not yet supported, set in AdditionalOptions for now -->
+      <WholeProgramOptimization>false</WholeProgramOptimization> <!-- not yet supported, set in AdditionalOptions for now -->
       <BasicRuntimeChecks>Disabled</BasicRuntimeChecks>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
 
-      <AdditionalClOptions>%(AdditionalClOptions);/GL;/Oy</AdditionalClOptions>
-
       <PreprocessorDefinitions>
         %(PreprocessorDefinitions);
         G_DISABLE_CAST_CHECKS;
       </PreprocessorDefinitions>
     </ClCompile>
-    <Lib>
-      <LinkTimeCodeGeneration>NOSTATUS</LinkTimeCodeGeneration>
-    </Lib>
     <Link>
-      <LinkTimeCodeGeneration>NOSTATUS</LinkTimeCodeGeneration>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
 
