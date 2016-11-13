@@ -1,6 +1,7 @@
 from __future__ import print_function
 import datetime
 import glob
+import multiprocessing
 import os
 import shutil
 import subprocess
@@ -40,6 +41,8 @@ ci_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 v8_dir = os.path.join(ci_dir, "v8")
 output_dir = os.path.join(ci_dir, "__build__")
 
+msvs_multi_core_limit = multiprocessing.cpu_count() / 2
+
 def check_environment():
     for tool in [HSBUILD, DEVENV, PYTHON2, GIT, SZIP]:
         if not os.path.exists(tool):
@@ -76,6 +79,7 @@ def build_v8(platform, configuration, runtime):
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_use_external_startup_data=0",
             "-Dv8_enable_i18n_support=0",
+            "-Dmsvs_multi_core_limit=%d" % msvs_multi_core_limit,
             "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')))
         perform(DEVENV, os.path.join(v8_dir, "gypfiles", "all.sln"),
             "/build", configuration,
