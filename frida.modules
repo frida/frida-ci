@@ -5,9 +5,9 @@
 
   <!-- Buildable Modules -->
   <hsbuildmodule id="zlib">
-    <tarball href="http://zlib.net/zlib-1.2.8.tar.gz" version="1.2.8">
+    <tarball href="http://zlib.net/zlib-1.2.10.tar.gz" version="1.2.10">
       <patches>
-        <patch uri="https://raw.github.com/frida/frida-ci/master/patches/zlib-1.2.8.patch" />
+        <patch uri="https://raw.github.com/frida/frida-ci/master/patches/zlib-1.2.10.patch" />
       </patches>
     </tarball>
   </hsbuildmodule>
