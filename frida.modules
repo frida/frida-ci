@@ -12,7 +12,7 @@
     </tarball>
   </hsbuildmodule>
   <hsbuildmodule id="libffi">
-    <branch repo="frida-github" revision="ebf5995b5c7f3ae65f3b88f37e813f7d02e52977" />
+    <branch repo="frida-github" revision="9c661244823a60cfe7f08c5c2295aa5ead89fab3" />
   </hsbuildmodule>
   <hsbuildmodule id="glib" projects="glib.sln">
     <branch repo="frida-github" />
