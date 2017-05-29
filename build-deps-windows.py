@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 HSBUILD = r"C:\Program Files (x86)\HSBuild\bin\hsbuild.exe"
-DEVENV = r"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.com"
+DEVENV = r"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.com"
 PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
@@ -73,7 +73,7 @@ def build_v8(platform, configuration, runtime):
     if not os.path.exists(snapshot[0][1]):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
         os.environ['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
-        os.environ['GYP_MSVS_VERSION'] = '2015'
+        os.environ['GYP_MSVS_VERSION'] = '2017'
         os.environ['GYP_GENERATORS'] = 'msvs'
         perform(PYTHON2, os.path.join(v8_dir, "gypfiles", "gyp_v8"),
             "-Dtarget_arch=%s" % V8_ARCH[platform],
