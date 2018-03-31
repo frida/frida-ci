@@ -29,9 +29,9 @@ SDK_BLACKLISTED_EXTENSIONS = (
 )
 
 SDK_BLACKLISTED_FILES = (
-    "vala-0.38.lib",
-    "vala-0.38.pdb",
-    "valac-0.38.pdb",
+    "vala-0.42.lib",
+    "vala-0.42.pdb",
+    "valac-0.42.pdb",
     "glib-genmarshal.pdb",
     "gobject-query.pdb"
 )
@@ -55,7 +55,7 @@ def check_environment():
 #
 
 def build_hsmodules(platform, configuration):
-    vala_executable = os.path.join(ci_dir, "__build__", platform, configuration, "bin", "valac-0.38.exe")
+    vala_executable = os.path.join(ci_dir, "__build__", platform, configuration, "bin", "valac-0.42.exe")
     if not os.path.exists(vala_executable):
         perform(HSBUILD, "build", "-p", platform, "-c", configuration, "-v", "glib", "libgee", "json-glib", "vala")
 
@@ -180,17 +180,17 @@ def file_is_sdk_related(directory, filename):
     elif ext == "h" and base.startswith("vala"):
         return False
     elif ext in ("vapi", "deps"):
-        if base == "libvala-0.38":
+        if base == "libvala-0.42":
             return False
-        return not directory.endswith("share\\vala-0.38\\vapi")
+        return not directory.endswith("share\\vala-0.42\\vapi")
     return filename not in SDK_BLACKLISTED_FILES
 
 def file_is_vala_toolchain_related(directory, filename):
     base, ext = os.path.splitext(filename)
     ext = ext[1:]
     if ext in ('vapi', 'deps'):
-        return directory.endswith("share\\vala-0.38\\vapi")
-    return filename == "valac-0.38.exe"
+        return directory.endswith("share\\vala-0.42\\vapi")
+    return filename == "valac-0.42.exe"
 
 def transform_identity(srcfile):
     return srcfile
