@@ -20,6 +20,7 @@ RUN apt-get update \
 	python3-pip \
 	python3-prompt-toolkit \
 	python3-pygments \
+	python3-requests \
 	python3-setuptools \
 	ruby \
 	ruby-dev \
@@ -46,7 +47,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN pip3 install buildbot-worker \
+RUN pip3 install agithub buildbot-worker \
 	&& gem install fpm -v 1.9.3 --no-ri --no-rdoc
 
 USER buildbot
