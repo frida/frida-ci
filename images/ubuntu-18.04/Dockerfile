@@ -5,9 +5,7 @@ RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
 	curl \
-	gcc-multilib \
 	git \
-	lib32stdc++-5-dev \
 	locales \
 	python-colorama \
 	python-dev \
