@@ -24,7 +24,7 @@ RUN apt-get update \
 	&& curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 	&& apt-get install -y nodejs \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& pip3 install agithub buildbot-worker \
+	&& pip3 install agithub==2.1 buildbot-worker==1.1.2 \
 	&& gem install fpm -v 1.10.0 --no-ri --no-rdoc \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
