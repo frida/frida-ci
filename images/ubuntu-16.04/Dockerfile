@@ -2,13 +2,12 @@ FROM ubuntu:16.04
 LABEL maintainer="oleavr@frida.re"
 
 RUN apt-get update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	&& apt-get install -y \
 	build-essential \
 	curl \
 	gcc-multilib \
 	git \
 	lib32stdc++-5-dev \
-	locales \
 	python-colorama \
 	python-dev \
 	python-pip \
@@ -27,9 +26,8 @@ RUN apt-get update \
 	&& curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 	&& apt-get install -y nodejs \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
-	&& dpkg-reconfigure --frontend=noninteractive locales \
-	&& update-locale LANG=en_US.UTF-8 \
+	&& pip3 install agithub buildbot-worker \
+	&& gem install fpm -v 1.10.0 --no-ri --no-rdoc \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
 	&& mkdir -p /home/buildbot/.credentials \
@@ -42,13 +40,6 @@ RUN apt-get update \
 	&& echo 'Ubuntu 16.04 x86_64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
-
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-
-RUN pip3 install agithub buildbot-worker \
-	&& gem install fpm -v 1.9.3 --no-ri --no-rdoc
 
 USER buildbot
 WORKDIR /worker
