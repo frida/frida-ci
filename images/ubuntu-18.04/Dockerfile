@@ -2,10 +2,11 @@ FROM ubuntu:18.04
 LABEL maintainer="oleavr@frida.re"
 
 RUN apt-get update \
-	&& apt-get install -y \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	build-essential \
 	curl \
 	git \
+	locales \
 	python-colorama \
 	python-dev \
 	python-pip \
@@ -21,6 +22,9 @@ RUN apt-get update \
 	python3-setuptools \
 	ruby \
 	ruby-dev \
+	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+	&& dpkg-reconfigure --frontend=noninteractive locales \
+	&& update-locale LANG=en_US.UTF-8 \
 	&& curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 	&& apt-get install -y nodejs \
 	&& rm -rf /var/lib/apt/lists/* \
@@ -38,6 +42,10 @@ RUN apt-get update \
 	&& echo 'Ubuntu 18.04 x86_64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 USER buildbot
 WORKDIR /worker
