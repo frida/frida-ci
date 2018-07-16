@@ -1,15 +1,21 @@
 from __future__ import print_function
+import codecs
 import datetime
 import glob
 import multiprocessing
 import os
+import platform
 import shutil
 import subprocess
 import sys
 import tempfile
 
-HSBUILD = r"C:\Program Files (x86)\HSBuild\bin\hsbuild.exe"
-DEVENV = r"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\devenv.com"
+HSBUILD_DIR = r"C:\Program Files (x86)\HSBuild"
+MSVS = r"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community"
+WIN10_SDK_DIR = r"C:\Program Files (x86)\Windows Kits\10"
+WIN10_SDK_VERSION = "10.0.17134.0"
+WINXP_SDK_DIR = r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A"
+MESON = r"C:\Program Files\Python 3.6\Scripts\meson.bat"
 PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
@@ -41,23 +47,39 @@ ci_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 v8_dir = os.path.join(ci_dir, "v8")
 output_dir = os.path.join(ci_dir, "__build__")
 
+msvs_devenv = MSVS + r"\Common7\IDE\devenv.com"
 msvs_multi_core_limit = multiprocessing.cpu_count() / 2
+cached_msvc_dir = None
+
+build_platform = 'x86_64' if platform.machine().endswith("64") else 'x86'
+
 
 def check_environment():
-    for tool in [HSBUILD, DEVENV, PYTHON2, GIT, SZIP]:
+    for tool in [HSBUILD_DIR, MSVS, WIN10_SDK_DIR, WINXP_SDK_DIR, MESON, PYTHON2, GIT, SZIP]:
         if not os.path.exists(tool):
             print("ERROR: %s not found" % tool, file=sys.stderr)
             sys.exit(1)
+
+def get_msvc_tool_dir():
+    global cached_msvc_dir
+    if cached_msvc_dir is None:
+        version = sorted(glob.glob(os.path.join(MSVS, "VC", "Tools", "MSVC", "*.*.*")))[-1]
+        cached_msvc_dir = os.path.join(MSVS, "VC", "Tools", "MSVC", version)
+    return cached_msvc_dir
+
+def platform_to_msvc(platform):
+    return 'x64' if platform == 'x86_64' else 'x86'
 
 
 #
 # Building
 #
 
-def build_hsmodules(platform, configuration):
+def build_hs_modules(platform, configuration):
+    hsbuild_executable = os.path.join(HSBUILD_DIR, "bin", "hsbuild.exe")
     vala_executable = os.path.join(ci_dir, "__build__", platform, configuration, "bin", "valac-0.42.exe")
     if not os.path.exists(vala_executable):
-        perform(HSBUILD, "build", "-p", platform, "-c", configuration, "-v", "glib", "libgee", "json-glib", "vala")
+        perform(hsbuild_executable, "build", "-p", platform, "-c", configuration, "-v", "glib", "libgee", "json-glib", "vala")
 
 def build_v8(platform, configuration, runtime):
     if not os.path.exists(v8_dir):
@@ -81,7 +103,7 @@ def build_v8(platform, configuration, runtime):
             "-Dv8_enable_i18n_support=0",
             "-Dmsvs_multi_core_limit=%d" % msvs_multi_core_limit,
             "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')))
-        perform(DEVENV, os.path.join(v8_dir, "gypfiles", "all.sln"),
+        perform(msvs_devenv, os.path.join(v8_dir, "gypfiles", "all.sln"),
             "/build", configuration,
             "/project", "v8_snapshot",
             "/projectconfig", configuration)
@@ -113,6 +135,104 @@ def v8_library(name, platform, configuration, runtime):
         output = os.path.join(output_lib_dir, filename)
         files.append((intermediate, output))
     return files
+
+def build_meson_modules(platform, configuration):
+    shell_env, cross_config_path = generate_meson_params(platform, configuration)
+    build_meson_module("glib-schannel", shell_env, cross_config_path)
+
+def build_meson_module(name, shell_env, cross_config_path):
+    perform(MESON, "build", "--cross-file", cross_config_path, cwd=os.path.join(ci_dir, name), env=shell_env)
+
+def generate_meson_params(platform, configuration):
+    host_env = generate_meson_env(platform, configuration)
+    if platform == build_platform:
+        build_env = host_env
+    else:
+        build_env = generate_meson_env(build_platform, configuration)
+    return (build_env.shell_env, host_env.cross_config_path)
+
+def generate_meson_env(platform, configuration):
+    env_dir = os.path.join(output_dir, "env", platform, configuration)
+    if not os.path.exists(env_dir):
+        os.makedirs(env_dir)
+
+    vc_dir = os.path.join(MSVS, "VC")
+
+    msvc_platform = platform_to_msvc(platform)
+    msvc_dir = get_msvc_tool_dir()
+    msvc_bin_dir = os.path.join(msvc_dir, "bin", "Host" + platform_to_msvc(build_platform), msvc_platform)
+
+    cl_path = os.path.join(msvc_bin_dir, "cl.exe")
+    lib_path = os.path.join(msvc_bin_dir, "lib.exe")
+    link_path = os.path.join(msvc_bin_dir, "link.exe")
+
+    pkgconfig_path = os.path.join(HSBUILD_DIR, "tools", "bin", "pkg-config.exe")
+    pkgconfig_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, "lib", "pkgconfig")
+
+    cl_wrapper_path = os.path.join(env_dir, "cl.bat")
+    with codecs.open(cl_wrapper_path, "w", 'utf-8') as f:
+        f.write("""@echo off
+setlocal enableextensions
+"{cl}" %*
+endlocal""".format(cl=cl_path))
+
+    pkgconfig_wrapper_path = os.path.join(env_dir, "pkg-config.bat")
+    with codecs.open(pkgconfig_wrapper_path, "w", 'utf-8') as f:
+        f.write("""@echo off
+setlocal enableextensions
+set PKG_CONFIG_PATH={pkgconfig_lib_dir}
+"{pkgconfig_path}" %*
+endlocal""".format(pkgconfig_path=pkgconfig_path, pkgconfig_lib_dir=pkgconfig_lib_dir))
+
+    cross_config_path = os.path.join(env_dir, "config.txt")
+    with codecs.open(cross_config_path, "w", 'utf-8') as f:
+        f.write("""\
+[binaries]
+c = '{cl}'
+cpp = '{cl}'
+ar = '{lib}'
+pkgconfig = '{pkgconfig}'
+
+[properties]
+c_args = []
+cpp_args = []
+
+[host_machine]
+system = 'windows'
+cpu_family = '{cpu_family}'
+cpu = '{cpu}'
+endian = 'little'
+""".format(
+        cl=escape_path(cl_wrapper_path),
+        lib=escape_path(lib_path),
+        pkgconfig=escape_path(pkgconfig_wrapper_path),
+        cpu_family=platform,
+        cpu=platform
+    ))
+
+    if platform == 'x86':
+        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "lib")
+    else:
+        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "lib", msvc_platform)
+    library_path = ";".join([
+        os.path.join(msvc_dir, "lib", msvc_platform),
+        os.path.join(msvc_dir, "atlmfc", "lib", msvc_platform),
+        os.path.join(vc_dir, "Auxiliary", "VS", "lib", msvc_platform),
+        os.path.join(WIN10_SDK_DIR, "lib", WIN10_SDK_VERSION, "ucrt", msvc_platform),
+        winxp_lib_dir,
+    ])
+
+    shell_env = {}
+    shell_env.update(os.environ)
+    shell_env["PATH"] = "{};{};{}".format(env_dir, msvc_bin_dir, shell_env["PATH"])
+    shell_env["LIB"] = library_path
+
+    return MesonEnv(shell_env, cross_config_path)
+
+class MesonEnv(object):
+    def __init__(self, shell_env, cross_config_path):
+        self.shell_env = shell_env
+        self.cross_config_path = cross_config_path
 
 
 #
@@ -208,6 +328,9 @@ def transform_toolchain_dest(srcfile):
 # Utilities
 #
 
+def escape_path(path):
+    return path.replace("\\", "\\\\")
+
 def perform(*args, **kwargs):
     print(" ".join(args))
     subprocess.check_call(args, **kwargs)
@@ -232,7 +355,8 @@ if __name__ == '__main__':
     check_environment()
     for platform in ["x86_64", "x86"]:
         for configuration in ["Debug", "Release"]:
-            build_hsmodules(platform, configuration)
+            build_hs_modules(platform, configuration)
             for runtime in ['static', 'dynamic']:
                 build_v8(platform, configuration, runtime)
+            build_meson_modules(platform, configuration)
     package()
