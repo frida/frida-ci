@@ -16,6 +16,7 @@ WIN10_SDK_DIR = r"C:\Program Files (x86)\Windows Kits\10"
 WIN10_SDK_VERSION = "10.0.17134.0"
 WINXP_SDK_DIR = r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A"
 MESON = r"C:\Program Files\Python 3.6\Scripts\meson.bat"
+NINJA = r"C:\Program Files\Ninja\ninja.exe"
 PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
@@ -55,7 +56,7 @@ build_platform = 'x86_64' if platform.machine().endswith("64") else 'x86'
 
 
 def check_environment():
-    for tool in [HSBUILD_DIR, MSVS, WIN10_SDK_DIR, WINXP_SDK_DIR, MESON, PYTHON2, GIT, SZIP]:
+    for tool in [HSBUILD_DIR, MSVS, WIN10_SDK_DIR, WINXP_SDK_DIR, MESON, NINJA, PYTHON2, GIT, SZIP]:
         if not os.path.exists(tool):
             print("ERROR: %s not found" % tool, file=sys.stderr)
             sys.exit(1)
@@ -137,11 +138,22 @@ def v8_library(name, platform, configuration, runtime):
     return files
 
 def build_meson_modules(platform, configuration):
-    shell_env, cross_config_path = generate_meson_params(platform, configuration)
-    build_meson_module("glib-schannel", shell_env, cross_config_path)
+    prefix = os.path.join(ci_dir, "__build__", platform, configuration)
+    env_dir, shell_env, cross_config_path = generate_meson_params(platform, configuration)
+    build_meson_module("glib-schannel", prefix, env_dir, shell_env, cross_config_path)
 
-def build_meson_module(name, shell_env, cross_config_path):
-    perform(MESON, "build", "--cross-file", cross_config_path, cwd=os.path.join(ci_dir, name), env=shell_env)
+def build_meson_module(name, prefix, env_dir, shell_env, cross_config_path):
+    build_dir = os.path.join(env_dir, name)
+    if os.path.exists(build_dir):
+        shutil.rmtree(build_dir)
+    perform(
+        MESON,
+        build_dir,
+        "--prefix", prefix,
+        "--cross-file", cross_config_path,
+        cwd=os.path.join(ci_dir, name),
+        env=shell_env
+    )
 
 def generate_meson_params(platform, configuration):
     host_env = generate_meson_env(platform, configuration)
@@ -149,10 +161,10 @@ def generate_meson_params(platform, configuration):
         build_env = host_env
     else:
         build_env = generate_meson_env(build_platform, configuration)
-    return (build_env.shell_env, host_env.cross_config_path)
+    return (host_env.path, build_env.shell_env, host_env.cross_config_path)
 
 def generate_meson_env(platform, configuration):
-    env_dir = os.path.join(output_dir, "env", platform, configuration)
+    env_dir = os.path.join(output_dir, platform, configuration, "tmp")
     if not os.path.exists(env_dir):
         os.makedirs(env_dir)
 
@@ -169,20 +181,58 @@ def generate_meson_env(platform, configuration):
     pkgconfig_path = os.path.join(HSBUILD_DIR, "tools", "bin", "pkg-config.exe")
     pkgconfig_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, "lib", "pkgconfig")
 
+    exe_path = ";".join([
+        env_dir,
+        os.path.dirname(NINJA),
+        msvc_bin_dir,
+    ])
+
+    include_path = ";".join([
+        os.path.join(msvc_dir, "include"),
+        os.path.join(msvc_dir, "atlmfc", "include"),
+        os.path.join(vc_dir, "Auxiliary", "VS", "include"),
+        os.path.join(WIN10_SDK_DIR, "Include", WIN10_SDK_VERSION, "ucrt"),
+        os.path.join(WINXP_SDK_DIR, "Include"),
+    ])
+
+    if platform == 'x86':
+        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "Lib")
+    else:
+        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "Lib", msvc_platform)
+    library_path = ";".join([
+        os.path.join(msvc_dir, "lib", msvc_platform),
+        os.path.join(msvc_dir, "atlmfc", "lib", msvc_platform),
+        os.path.join(vc_dir, "Auxiliary", "VS", "lib", msvc_platform),
+        os.path.join(WIN10_SDK_DIR, "Lib", WIN10_SDK_VERSION, "ucrt", msvc_platform),
+        winxp_lib_dir,
+    ])
+
     cl_wrapper_path = os.path.join(env_dir, "cl.bat")
     with codecs.open(cl_wrapper_path, "w", 'utf-8') as f:
-        f.write("""@echo off
-setlocal enableextensions
-"{cl}" %*
-endlocal""".format(cl=cl_path))
+        f.write("""@ECHO OFF
+SETLOCAL EnableExtensions
+SET PATH={exe_path};%PATH%
+SET INCLUDE={include_path}
+SET LIB={library_path}
+SET _res=0
+"{cl}" %* || SET _res=1
+ENDLOCAL & SET _res=%_res%
+EXIT /B %_res%""".format(
+        cl=cl_path,
+        exe_path=exe_path,
+        include_path=include_path,
+        library_path=library_path,
+    ))
 
     pkgconfig_wrapper_path = os.path.join(env_dir, "pkg-config.bat")
     with codecs.open(pkgconfig_wrapper_path, "w", 'utf-8') as f:
-        f.write("""@echo off
-setlocal enableextensions
-set PKG_CONFIG_PATH={pkgconfig_lib_dir}
+        f.write("""@ECHO OFF
+SETLOCAL EnableExtensions
+SET _res=0
+SET PKG_CONFIG_PATH={pkgconfig_lib_dir}
 "{pkgconfig_path}" %*
-endlocal""".format(pkgconfig_path=pkgconfig_path, pkgconfig_lib_dir=pkgconfig_lib_dir))
+ENDLOCAL & SET _res=%_res%
+EXIT /B %_res%""".format(pkgconfig_path=pkgconfig_path, pkgconfig_lib_dir=pkgconfig_lib_dir))
 
     cross_config_path = os.path.join(env_dir, "config.txt")
     with codecs.open(cross_config_path, "w", 'utf-8') as f:
@@ -210,27 +260,17 @@ endian = 'little'
         cpu=platform
     ))
 
-    if platform == 'x86':
-        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "lib")
-    else:
-        winxp_lib_dir = os.path.join(WINXP_SDK_DIR, "lib", msvc_platform)
-    library_path = ";".join([
-        os.path.join(msvc_dir, "lib", msvc_platform),
-        os.path.join(msvc_dir, "atlmfc", "lib", msvc_platform),
-        os.path.join(vc_dir, "Auxiliary", "VS", "lib", msvc_platform),
-        os.path.join(WIN10_SDK_DIR, "lib", WIN10_SDK_VERSION, "ucrt", msvc_platform),
-        winxp_lib_dir,
-    ])
-
     shell_env = {}
     shell_env.update(os.environ)
-    shell_env["PATH"] = "{};{};{}".format(env_dir, msvc_bin_dir, shell_env["PATH"])
+    shell_env["PATH"] = exe_path + ";" + shell_env["PATH"]
+    shell_env["INCLUDE"] = include_path
     shell_env["LIB"] = library_path
 
-    return MesonEnv(shell_env, cross_config_path)
+    return MesonEnv(env_dir, shell_env, cross_config_path)
 
 class MesonEnv(object):
-    def __init__(self, shell_env, cross_config_path):
+    def __init__(self, path, shell_env, cross_config_path):
+        self.path = path
         self.shell_env = shell_env
         self.cross_config_path = cross_config_path
 
