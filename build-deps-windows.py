@@ -50,6 +50,7 @@ output_dir = os.path.join(ci_dir, "__build__")
 
 msvs_devenv = MSVS + r"\Common7\IDE\devenv.com"
 msvs_multi_core_limit = multiprocessing.cpu_count() / 2
+cached_meson_params = {}
 cached_msvc_dir = None
 
 build_platform = 'x86_64' if platform.machine().endswith("64") else 'x86'
@@ -138,22 +139,41 @@ def v8_library(name, platform, configuration, runtime):
     return files
 
 def build_meson_modules(platform, configuration):
-    prefix = os.path.join(ci_dir, "__build__", platform, configuration)
-    env_dir, shell_env, cross_config_path = generate_meson_params(platform, configuration)
-    build_meson_module("glib-schannel", prefix, env_dir, shell_env, cross_config_path)
+    for name in ["glib-schannel"]:
+        build_meson_module(name, platform, configuration)
 
-def build_meson_module(name, prefix, env_dir, shell_env, cross_config_path):
+def build_meson_module(name, platform, configuration):
+    env_dir, shell_env, cross_config_path = get_meson_params(platform, configuration)
+
     build_dir = os.path.join(env_dir, name)
+    build_type = 'minsize' if configuration == 'Release' else 'debug'
+    prefix = os.path.join(ci_dir, "__build__", platform, configuration)
+
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
+
     perform(
         MESON,
         build_dir,
+        "--buildtype", build_type,
         "--prefix", prefix,
         "--cross-file", cross_config_path,
         cwd=os.path.join(ci_dir, name),
         env=shell_env
     )
+    perform(NINJA, cwd=build_dir, env=shell_env)
+
+def get_meson_params(platform, configuration):
+    global cached_meson_params
+
+    identifier = ":".join([platform, configuration])
+
+    params = cached_meson_params.get(identifier, None)
+    if params is None:
+        params = generate_meson_params(platform, configuration)
+        cached_meson_params[identifier] = params
+
+    return params
 
 def generate_meson_params(platform, configuration):
     host_env = generate_meson_env(platform, configuration)
