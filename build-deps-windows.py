@@ -15,6 +15,7 @@ WIN10_SDK_DIR = r"C:\Program Files (x86)\Windows Kits\10"
 WIN10_SDK_VERSION = "10.0.17134.0"
 WINXP_SDK_DIR = r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A"
 MESON = r"C:\Program Files\Python 3.6\Scripts\meson.bat"
+NINJA = r"C:\Program Files\Ninja\ninja.exe"
 PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
@@ -178,13 +179,15 @@ def build_meson_module(name, platform, configuration):
         build_dir,
         "--buildtype", build_type,
         "--prefix", prefix,
-        "--backend", "vs2017",
+        "--backend", "ninja",
         "--cross-file", cross_config_path,
         cwd=os.path.join(ci_dir, name),
         env=shell_env
     )
 
     fixup_meson_projects(build_dir, configuration)
+
+    perform(NINJA, cwd=build_dir, env=shell_env)
 
 def fixup_meson_projects(build_dir, configuration):
     for project_path in glob.glob(os.path.join(build_dir, "**", "*.vcxproj"), recursive=True):
@@ -237,6 +240,7 @@ def generate_meson_env(platform, configuration):
 
     exe_path = ";".join([
         env_dir,
+        os.path.dirname(NINJA),
         msvc_bin_dir,
     ])
 
