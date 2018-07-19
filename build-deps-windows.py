@@ -398,6 +398,9 @@ def transform_identity(srcfile):
 def transform_sdk_dest(srcfile):
     dstfile = srcfile.replace("x86_64\\", "x64-")
     dstfile = dstfile.replace("x86\\", "Win32-")
+    if dstfile.endswith(".a"):
+        name, ext = os.path.splitext(dstfile)
+        dstfile = name + ".lib"
     return dstfile
 
 def transform_toolchain_dest(srcfile):
