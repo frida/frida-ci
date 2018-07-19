@@ -1,4 +1,3 @@
-from __future__ import print_function
 import codecs
 import datetime
 import glob
@@ -16,7 +15,6 @@ WIN10_SDK_DIR = r"C:\Program Files (x86)\Windows Kits\10"
 WIN10_SDK_VERSION = "10.0.17134.0"
 WINXP_SDK_DIR = r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A"
 MESON = r"C:\Program Files\Python 3.6\Scripts\meson.bat"
-NINJA = r"C:\Program Files\Ninja\ninja.exe"
 PYTHON2 = r"C:\Program Files\Python 2.7\python.exe"
 GIT = r"C:\Program Files\Git\bin\git.exe"
 SZIP = r"C:\Program Files\7-Zip\7z.exe"
@@ -43,6 +41,13 @@ SDK_BLACKLISTED_FILES = (
     "gobject-query.pdb"
 )
 
+MESON_MSVS_FIXUPS = (
+    ("<CharacterSet>MultiByte</CharacterSet>", "<CharacterSet>Unicode</CharacterSet>"),
+    ("<PlatformToolset>v141</PlatformToolset>", "<PlatformToolset>v141_xp</PlatformToolset>"),
+    ("<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>", "<RuntimeLibrary>MultiThreaded</RuntimeLibrary>"),
+    ("<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>", "<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>"),
+)
+
 
 ci_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 v8_dir = os.path.join(ci_dir, "v8")
@@ -57,7 +62,7 @@ build_platform = 'x86_64' if platform.machine().endswith("64") else 'x86'
 
 
 def check_environment():
-    for tool in [HSBUILD_DIR, MSVS, WIN10_SDK_DIR, WINXP_SDK_DIR, MESON, NINJA, PYTHON2, GIT, SZIP]:
+    for tool in [HSBUILD_DIR, MSVS, WIN10_SDK_DIR, WINXP_SDK_DIR, MESON, PYTHON2, GIT, SZIP]:
         if not os.path.exists(tool):
             print("ERROR: %s not found" % tool, file=sys.stderr)
             sys.exit(1)
@@ -157,11 +162,24 @@ def build_meson_module(name, platform, configuration):
         build_dir,
         "--buildtype", build_type,
         "--prefix", prefix,
+        "--backend", "vs2017",
         "--cross-file", cross_config_path,
         cwd=os.path.join(ci_dir, name),
         env=shell_env
     )
-    perform(NINJA, cwd=build_dir, env=shell_env)
+
+    fixup_meson_projects(build_dir)
+
+def fixup_meson_projects(build_dir):
+    for project_path in glob.glob(os.path.join(build_dir, "**", "*.vcxproj"), recursive=True):
+        with codecs.open(project_path, "rb", 'utf-8') as f:
+            project_xml = f.read()
+
+        for (old, new) in MESON_MSVS_FIXUPS:
+            project_xml = project_xml.replace(old, new)
+
+        with codecs.open(project_path, "wb", 'utf-8') as f:
+            f.write(project_xml)
 
 def get_meson_params(platform, configuration):
     global cached_meson_params
@@ -203,7 +221,6 @@ def generate_meson_env(platform, configuration):
 
     exe_path = ";".join([
         env_dir,
-        os.path.dirname(NINJA),
         msvc_bin_dir,
     ])
 
@@ -250,7 +267,7 @@ EXIT /B %_res%""".format(
 SETLOCAL EnableExtensions
 SET _res=0
 SET PKG_CONFIG_PATH={pkgconfig_lib_dir}
-"{pkgconfig_path}" %*
+"{pkgconfig_path}" --static %*
 ENDLOCAL & SET _res=%_res%
 EXIT /B %_res%""".format(pkgconfig_path=pkgconfig_path, pkgconfig_lib_dir=pkgconfig_lib_dir))
 
