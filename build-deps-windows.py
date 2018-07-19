@@ -336,6 +336,9 @@ def package():
 
     sdk_built_files = []
     for root, dirs, files in os.walk(output_dir):
+        tokens = root[len(output_dir) + 1:].split("\\")
+        if len(tokens) >= 3 and tokens[2] == "tmp":
+            continue
         relpath = root[len(output_dir) + 1:]
         included_files = map(lambda name: os.path.join(relpath, name),
             filter(lambda filename: file_is_sdk_related(root, filename), files))
