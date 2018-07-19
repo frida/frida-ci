@@ -187,9 +187,13 @@ def build_meson_modules(platform, configuration):
 def build_meson_module(name, platform, configuration):
     env_dir, shell_env = get_meson_params(platform, configuration)
 
+    source_dir = os.path.join(ci_dir, name)
     build_dir = os.path.join(env_dir, name)
     build_type = 'minsize' if configuration == 'Release' else 'debug'
     prefix = os.path.join(ci_dir, "__build__", platform, configuration)
+
+    if not os.path.exists(source_dir):
+        perform(GIT, "clone", "git://github.com/frida/{}.git".format(name), cwd=ci_dir)
 
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
@@ -200,7 +204,7 @@ def build_meson_module(name, platform, configuration):
         "--buildtype", build_type,
         "--prefix", prefix,
         "--backend", "ninja",
-        cwd=os.path.join(ci_dir, name),
+        cwd=source_dir,
         env=shell_env
     )
 
