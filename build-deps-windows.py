@@ -240,12 +240,16 @@ def generate_meson_env(platform, configuration):
     msvc_dir = get_msvc_tool_dir()
     msvc_bin_dir = os.path.join(msvc_dir, "bin", "Host" + platform_to_msvc(build_platform), msvc_platform)
 
+    extra_dll_dirs = []
+    if platform != build_platform:
+        build_msvc_platform = platform_to_msvc(build_platform)
+        extra_dll_dirs.append(os.path.join(msvc_dir, "bin", "Host" + build_msvc_platform, build_msvc_platform))
 
     exe_path = ";".join([
         env_dir,
         os.path.dirname(NINJA),
         msvc_bin_dir,
-    ])
+    ] + extra_dll_dirs)
 
     include_path = ";".join([
         os.path.join(msvc_dir, "include"),
