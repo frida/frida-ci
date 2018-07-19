@@ -41,12 +41,28 @@ SDK_BLACKLISTED_FILES = (
     "gobject-query.pdb"
 )
 
-MESON_MSVS_FIXUPS = (
+MESON_MSVS_FIXUPS_COMMON = (
     ("<CharacterSet>MultiByte</CharacterSet>", "<CharacterSet>Unicode</CharacterSet>"),
     ("<PlatformToolset>v141</PlatformToolset>", "<PlatformToolset>v141_xp</PlatformToolset>"),
-    ("<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>", "<RuntimeLibrary>MultiThreaded</RuntimeLibrary>"),
-    ("<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>", "<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>"),
+    ("\t\t<FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>\r\n", ""),
 )
+MESON_MSVS_FIXUPS_BY_CONFIGURATION = {
+    'Release': (
+        ("\t\t<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>\r\n", ""),
+        ("<MinimalRebuild>true</MinimalRebuild>", "\r\n\t\t\t".join([
+            "<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
+            "<Optimization>MinSpace</Optimization>",
+            "<MinimalRebuild>true</MinimalRebuild>",
+        ])),
+    ),
+    'Debug': (
+        ("\t\t<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>\r\n", ""),
+        ("<MinimalRebuild>true</MinimalRebuild>", "\r\n\t\t\t".join([
+            "<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>",
+            "<MinimalRebuild>true</MinimalRebuild>",
+        ])),
+    )
+}
 
 
 ci_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -168,14 +184,14 @@ def build_meson_module(name, platform, configuration):
         env=shell_env
     )
 
-    fixup_meson_projects(build_dir)
+    fixup_meson_projects(build_dir, configuration)
 
-def fixup_meson_projects(build_dir):
+def fixup_meson_projects(build_dir, configuration):
     for project_path in glob.glob(os.path.join(build_dir, "**", "*.vcxproj"), recursive=True):
         with codecs.open(project_path, "rb", 'utf-8') as f:
             project_xml = f.read()
 
-        for (old, new) in MESON_MSVS_FIXUPS:
+        for (old, new) in MESON_MSVS_FIXUPS_COMMON + MESON_MSVS_FIXUPS_BY_CONFIGURATION[configuration]:
             project_xml = project_xml.replace(old, new)
 
         with codecs.open(project_path, "wb", 'utf-8') as f:
