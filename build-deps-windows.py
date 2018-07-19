@@ -42,27 +42,37 @@ SDK_BLACKLISTED_FILES = (
     "gobject-query.pdb"
 )
 
-MESON_MSVS_FIXUPS_COMMON = (
-    ("<CharacterSet>MultiByte</CharacterSet>", "<CharacterSet>Unicode</CharacterSet>"),
-    ("<PlatformToolset>v141</PlatformToolset>", "<PlatformToolset>v141_xp</PlatformToolset>"),
-    ("\t\t<FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>\r\n", ""),
-)
-MESON_MSVS_FIXUPS_BY_CONFIGURATION = {
-    'Release': (
+MESON_NINJA_FIXUPS = {
+    'Common': [
+    ],
+    'Release': [
+        ("/MD", "/MT"),
+    ],
+    'Debug': [
+        ("/MDd", "/MTd"),
+    ]
+}
+MESON_MSVS_FIXUPS = {
+    'Common': [
+        ("<CharacterSet>MultiByte</CharacterSet>", "<CharacterSet>Unicode</CharacterSet>"),
+        ("<PlatformToolset>v141</PlatformToolset>", "<PlatformToolset>v141_xp</PlatformToolset>"),
+        ("\t\t<FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>\r\n", ""),
+    ],
+    'Release': [
         ("\t\t<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>\r\n", ""),
         ("<MinimalRebuild>true</MinimalRebuild>", "\r\n\t\t\t".join([
             "<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
             "<Optimization>MinSpace</Optimization>",
             "<MinimalRebuild>true</MinimalRebuild>",
         ])),
-    ),
-    'Debug': (
+    ],
+    'Debug': [
         ("\t\t<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>\r\n", ""),
         ("<MinimalRebuild>true</MinimalRebuild>", "\r\n\t\t\t".join([
             "<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>",
             "<MinimalRebuild>true</MinimalRebuild>",
         ])),
-    )
+    ]
 }
 
 
@@ -190,15 +200,19 @@ def build_meson_module(name, platform, configuration):
     perform(NINJA, cwd=build_dir, env=shell_env)
 
 def fixup_meson_projects(build_dir, configuration):
-    for project_path in glob.glob(os.path.join(build_dir, "**", "*.vcxproj"), recursive=True):
-        with codecs.open(project_path, "rb", 'utf-8') as f:
-            project_xml = f.read()
+    apply_fixups(MESON_NINJA_FIXUPS, "*.ninja", build_dir, configuration)
+    apply_fixups(MESON_MSVS_FIXUPS, "*.vcxproj", build_dir, configuration)
 
-        for (old, new) in MESON_MSVS_FIXUPS_COMMON + MESON_MSVS_FIXUPS_BY_CONFIGURATION[configuration]:
-            project_xml = project_xml.replace(old, new)
+def apply_fixups(fixups, pattern, build_dir, configuration):
+    for path in glob.glob(os.path.join(build_dir, "**", pattern), recursive=True):
+        with codecs.open(path, "rb", 'utf-8') as f:
+            data = f.read()
 
-        with codecs.open(project_path, "wb", 'utf-8') as f:
-            f.write(project_xml)
+        for (old, new) in fixups['Common'] + fixups[configuration]:
+            data = data.replace(old, new)
+
+        with codecs.open(path, "wb", 'utf-8') as f:
+            f.write(data)
 
 def get_meson_params(platform, configuration):
     global cached_meson_params
