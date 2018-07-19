@@ -4,6 +4,7 @@ import glob
 import multiprocessing
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +45,10 @@ SDK_BLACKLISTED_FILES = (
 
 MESON_NINJA_FIXUPS = {
     'Common': [
+        (".c.obj", ".obj"),
+        ("/Zi", "/Z7"),
+        ("/ZI", "/Z7"),
+        (re.compile(" \/Fd[^\"]+"), ""),
     ],
     'Release': [
         ("/MD", "/MT"),
@@ -208,7 +213,10 @@ def apply_fixups(fixups, pattern, build_dir, configuration):
             data = f.read()
 
         for (old, new) in fixups['Common'] + fixups[configuration]:
-            data = data.replace(old, new)
+            if isinstance(old, str):
+                data = data.replace(old, new)
+            else:
+                data = old.sub(new, data)
 
         with codecs.open(path, "wb", 'utf-8') as f:
             f.write(data)
