@@ -264,6 +264,12 @@ def generate_meson_env(platform, configuration):
         winxp_lib_dir,
     ])
 
+    cl_flags = "/D" + " /D".join([
+      "_USING_V110_SDK71_",
+      "_UNICODE",
+      "UNICODE"
+    ])
+
     cl_wrapper_path = os.path.join(env_dir, "cl.bat")
     with codecs.open(cl_wrapper_path, "w", 'utf-8') as f:
         f.write("""@ECHO OFF
@@ -271,6 +277,7 @@ SETLOCAL EnableExtensions
 SET PATH={exe_path};%PATH%
 SET INCLUDE={include_path}
 SET LIB={library_path}
+SET CL={cl_flags}
 SET _res=0
 "{cl}" %* || SET _res=1
 ENDLOCAL & SET _res=%_res%
@@ -279,6 +286,7 @@ EXIT /B %_res%""".format(
         exe_path=exe_path,
         include_path=include_path,
         library_path=library_path,
+        cl_flags=cl_flags,
     ))
 
     pkgconfig_wrapper_path = os.path.join(env_dir, "pkg-config.bat")
@@ -322,6 +330,7 @@ endian = 'little'
     shell_env["PATH"] = exe_path + ";" + shell_env["PATH"]
     shell_env["INCLUDE"] = include_path
     shell_env["LIB"] = library_path
+    shell_env["CL"] = cl_flags
 
     return MesonEnv(env_dir, shell_env, cross_config_path)
 
