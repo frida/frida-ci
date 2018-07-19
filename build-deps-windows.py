@@ -175,7 +175,7 @@ def build_meson_modules(platform, configuration):
         build_meson_module(name, platform, configuration)
 
 def build_meson_module(name, platform, configuration):
-    env_dir, shell_env, cross_config_path = get_meson_params(platform, configuration)
+    env_dir, shell_env = get_meson_params(platform, configuration)
 
     build_dir = os.path.join(env_dir, name)
     build_type = 'minsize' if configuration == 'Release' else 'debug'
@@ -190,7 +190,6 @@ def build_meson_module(name, platform, configuration):
         "--buildtype", build_type,
         "--prefix", prefix,
         "--backend", "ninja",
-        "--cross-file", cross_config_path,
         cwd=os.path.join(ci_dir, name),
         env=shell_env
     )
@@ -227,12 +226,8 @@ def get_meson_params(platform, configuration):
     return params
 
 def generate_meson_params(platform, configuration):
-    host_env = generate_meson_env(platform, configuration)
-    if platform == build_platform:
-        build_env = host_env
-    else:
-        build_env = generate_meson_env(build_platform, configuration)
-    return (host_env.path, build_env.shell_env, host_env.cross_config_path)
+    env = generate_meson_env(platform, configuration)
+    return (env.path, env.shell_env)
 
 def generate_meson_env(platform, configuration):
     env_dir = os.path.join(output_dir, platform, configuration, "tmp")
@@ -245,12 +240,6 @@ def generate_meson_env(platform, configuration):
     msvc_dir = get_msvc_tool_dir()
     msvc_bin_dir = os.path.join(msvc_dir, "bin", "Host" + platform_to_msvc(build_platform), msvc_platform)
 
-    cl_path = os.path.join(msvc_bin_dir, "cl.exe")
-    lib_path = os.path.join(msvc_bin_dir, "lib.exe")
-    link_path = os.path.join(msvc_bin_dir, "link.exe")
-
-    pkgconfig_path = os.path.join(HSBUILD_DIR, "tools", "bin", "pkg-config.exe")
-    pkgconfig_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, "lib", "pkgconfig")
 
     exe_path = ";".join([
         env_dir,
@@ -284,25 +273,8 @@ def generate_meson_env(platform, configuration):
       "UNICODE"
     ])
 
-    cl_wrapper_path = os.path.join(env_dir, "cl.bat")
-    with codecs.open(cl_wrapper_path, "w", 'utf-8') as f:
-        f.write("""@ECHO OFF
-SETLOCAL EnableExtensions
-SET PATH={exe_path};%PATH%
-SET INCLUDE={include_path}
-SET LIB={library_path}
-SET CL={cl_flags}
-SET _res=0
-"{cl}" %* || SET _res=1
-ENDLOCAL & SET _res=%_res%
-EXIT /B %_res%""".format(
-        cl=cl_path,
-        exe_path=exe_path,
-        include_path=include_path,
-        library_path=library_path,
-        cl_flags=cl_flags,
-    ))
-
+    pkgconfig_path = os.path.join(HSBUILD_DIR, "tools", "bin", "pkg-config.exe")
+    pkgconfig_lib_dir = os.path.join(ci_dir, "__build__", platform, configuration, "lib", "pkgconfig")
     pkgconfig_wrapper_path = os.path.join(env_dir, "pkg-config.bat")
     with codecs.open(pkgconfig_wrapper_path, "w", 'utf-8') as f:
         f.write("""@ECHO OFF
@@ -313,32 +285,6 @@ SET PKG_CONFIG_PATH={pkgconfig_lib_dir}
 ENDLOCAL & SET _res=%_res%
 EXIT /B %_res%""".format(pkgconfig_path=pkgconfig_path, pkgconfig_lib_dir=pkgconfig_lib_dir))
 
-    cross_config_path = os.path.join(env_dir, "config.txt")
-    with codecs.open(cross_config_path, "w", 'utf-8') as f:
-        f.write("""\
-[binaries]
-c = '{cl}'
-cpp = '{cl}'
-ar = '{lib}'
-pkgconfig = '{pkgconfig}'
-
-[properties]
-c_args = []
-cpp_args = []
-
-[host_machine]
-system = 'windows'
-cpu_family = '{cpu_family}'
-cpu = '{cpu}'
-endian = 'little'
-""".format(
-        cl=escape_path(cl_wrapper_path),
-        lib=escape_path(lib_path),
-        pkgconfig=escape_path(pkgconfig_wrapper_path),
-        cpu_family=platform,
-        cpu=platform
-    ))
-
     shell_env = {}
     shell_env.update(os.environ)
     shell_env["PATH"] = exe_path + ";" + shell_env["PATH"]
@@ -346,13 +292,12 @@ endian = 'little'
     shell_env["LIB"] = library_path
     shell_env["CL"] = cl_flags
 
-    return MesonEnv(env_dir, shell_env, cross_config_path)
+    return MesonEnv(env_dir, shell_env)
 
 class MesonEnv(object):
-    def __init__(self, path, shell_env, cross_config_path):
+    def __init__(self, path, shell_env):
         self.path = path
         self.shell_env = shell_env
-        self.cross_config_path = cross_config_path
 
 
 #
