@@ -196,7 +196,7 @@ def build_meson_module(name, platform, configuration):
 
     fixup_meson_projects(build_dir, configuration)
 
-    perform(NINJA, cwd=build_dir, env=shell_env)
+    perform(NINJA, "install", cwd=build_dir, env=shell_env)
 
 def fixup_meson_projects(build_dir, configuration):
     apply_fixups(MESON_NINJA_FIXUPS, "*.ninja", build_dir, configuration)
