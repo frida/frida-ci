@@ -176,8 +176,13 @@ def v8_library(name, platform, configuration, runtime):
     return files
 
 def build_meson_modules(platform, configuration):
-    for name in ["glib-schannel"]:
-        build_meson_module(name, platform, configuration)
+    modules = [
+        ("glib-schannel", "glib-schannel-static.pc"),
+    ]
+    for (name, pc_name) in modules:
+        pc_path = os.path.join(ci_dir, "__build__", platform, configuration, "lib", "pkgconfig", pc_name)
+        if not os.path.exists(pc_path):
+            build_meson_module(name, platform, configuration)
 
 def build_meson_module(name, platform, configuration):
     env_dir, shell_env = get_meson_params(platform, configuration)
