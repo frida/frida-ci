@@ -133,19 +133,28 @@ def build_v8(platform, configuration, runtime):
     snapshot = v8_library("v8_snapshot", platform, configuration, runtime)
     if not os.path.exists(snapshot[0][1]):
         perform(GIT, "clean", "-xffd", cwd=v8_dir)
-        os.environ['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
-        os.environ['GYP_MSVS_VERSION'] = '2017'
-        os.environ['GYP_GENERATORS'] = 'msvs'
+
+        env = {}
+        env.update(os.environ)
+        env['PATH'] = "{};{}".format(os.path.dirname(PYTHON2), env['PATH'])
+        env['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
+        env['GYP_MSVS_VERSION'] = '2017'
+        env['GYP_GENERATORS'] = 'msvs'
+
         perform(PYTHON2, os.path.join(v8_dir, "gypfiles", "gyp_v8"),
             "-Dtarget_arch=%s" % V8_ARCH[platform],
             "-Dv8_use_external_startup_data=0",
             "-Dv8_enable_i18n_support=0",
             "-Dmsvs_multi_core_limit=%d" % msvs_multi_core_limit,
-            "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')))
+            "-Dforce_dynamic_crt=" + str(int(runtime == 'dynamic')),
+            env=env)
+
         perform(msvs_devenv, os.path.join(v8_dir, "gypfiles", "all.sln"),
             "/build", configuration,
             "/project", "v8_snapshot",
-            "/projectconfig", configuration)
+            "/projectconfig", configuration,
+            env=env)
+
         for src, dst in headers + base + libbase + libplatform + libsampler + snapshot:
             copy(src, dst)
 
