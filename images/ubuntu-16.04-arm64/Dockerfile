@@ -38,9 +38,9 @@ RUN apt-get update \
 	&& ln -s .credentials/npmrc /home/buildbot/.npmrc \
 	&& ln -s .credentials/pypirc /home/buildbot/.pypirc \
 	&& chown -R buildbot:buildbot /home/buildbot \
-	&& mkdir -p /worker/info /worker/frida-ubuntu_16_04-arm64v8/build \
+	&& mkdir -p /worker/info /worker/frida-ubuntu_16_04-arm64/build \
 	&& echo 'Ole Andre Vadla Ravnas <oleavr@frida.re>' > /worker/info/admin \
-	&& echo 'Ubuntu 16.04 arm64v8' > /worker/info/host \
+	&& echo 'Ubuntu 16.04 arm64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
 
@@ -50,7 +50,7 @@ ENV LC_ALL en_US.UTF-8
 
 USER buildbot
 WORKDIR /worker
-VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_16_04-arm64v8/build"]
+VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_16_04-arm64/build"]
 
 ENTRYPOINT ["buildbot-worker"]
 CMD ["start", "--nodaemon"]
