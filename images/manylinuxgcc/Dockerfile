@@ -12,8 +12,10 @@ ARG BINUTILS_VERSION=2.34
 
 ARG SYSTEM_TRIPLET=$ARCH-redhat-linux
 ARG DEVTOOLS_PREFIX=/opt/devtools
+ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline -fuse-ld=gold"
+ARG DEVTOOLS_CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++ -fuse-ld=gold"
 ARG DEVTOOLS_CFLAGS="-ffunction-sections -fdata-sections"
-ARG DEVTOOLS_LDFLAGS="-fuse-ld=gold -Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
+ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
 RUN yum -y update \
@@ -45,8 +47,8 @@ RUN yum -y update \
     && cd build \
     && export \
         CPP="$DEVTOOLS_PREFIX/bin/cpp" \
-        CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline" \
-        CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++" \
+        CC="$DEVTOOLS_CC" \
+        CXX="$DEVTOOLS_CXX" \
         LD="$RHDEV_PREFIX/bin/ld.gold" \
         AR="$DEVTOOLS_PREFIX/bin/gcc-ar" \
         NM="$DEVTOOLS_PREFIX/bin/gcc-nm" \
@@ -68,8 +70,8 @@ RUN yum -y update \
     && rm -rf gcc.tar.gz gcc-$GCC_VERSION binutils.tar.gz binutils-$BINUTILS_VERSION
 
 ENV CPP="$DEVTOOLS_PREFIX/bin/cpp" \
-    CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline" \
-    CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++" \
+    CC="$DEVTOOLS_CC" \
+    CXX="$DEVTOOLS_CXX" \
     LD="$DEVTOOLS_PREFIX/bin/ld.gold" \
     AR="$DEVTOOLS_PREFIX/bin/ar" \
     NM="$DEVTOOLS_PREFIX/bin/nm" \
