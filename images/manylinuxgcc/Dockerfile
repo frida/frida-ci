@@ -11,7 +11,6 @@ ARG GCC_VERSION=9.3.0
 ARG BINUTILS_VERSION=2.34
 ARG PERL_VERSION=5.30.2
 
-ARG SYSTEM_TRIPLET=$ARCH-redhat-linux
 ARG DEVTOOLS_PREFIX=/opt/devtools
 ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline -fuse-ld=gold"
 ARG DEVTOOLS_CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++ -fuse-ld=gold"
@@ -20,7 +19,7 @@ ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
 RUN yum -y update \
-    && yum -y install flex texinfo \
+    && yum -y install flex glibc-devel.i386 libgcc.i386 texinfo \
     && yum clean all \
     && cd /tmp \
     && curl -L -o gcc.tar.gz "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
@@ -31,13 +30,9 @@ RUN yum -y update \
     && mkdir build \
     && cd build \
     && ../configure \
-        --build=$SYSTEM_TRIPLET \
-        --host=$SYSTEM_TRIPLET \
-        --target=$SYSTEM_TRIPLET \
         --prefix=$DEVTOOLS_PREFIX \
         --enable-checking=release \
         --enable-languages=c,c++ \
-        --disable-multilib \
     && make -j$CORES \
     && make install-strip \
     && cd /tmp \
@@ -62,9 +57,6 @@ RUN yum -y update \
     && mkdir build \
     && cd build \
     && ../configure \
-        --build=$SYSTEM_TRIPLET \
-        --host=$SYSTEM_TRIPLET \
-        --target=$SYSTEM_TRIPLET \
         --prefix=$DEVTOOLS_PREFIX \
         --enable-gold \
     && make -j$CORES \
