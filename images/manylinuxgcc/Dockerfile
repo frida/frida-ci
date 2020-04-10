@@ -13,6 +13,7 @@ ARG XZ_VERSION=5.2.5
 ARG TAR_VERSION=1.32
 ARG OPENSSH_VERSION=8.2p1
 ARG PERL_VERSION=5.30.2
+ARG NODE_VERSION=13.12.0
 
 ARG DEVTOOLS_PREFIX=/opt/devtools
 ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline -fuse-ld=gold"
@@ -116,6 +117,15 @@ RUN yum -y update \
     && make install-strip \
     && cd /tmp \
     && rm -rf perl.tar.gz perl-$PERL_VERSION \
+    && curl -L -o node.tar.gz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
+    && tar xf node.tar.gz \
+    && cd node-v$NODE_VERSION \
+    && ./configure --prefix=/opt/node-64 \
+    && make -j$CORES \
+    && make install \
+    && strip --strip-all /opt/node-64/bin/* \
+    && cd /tmp \
+    && rm -rf node.tar.gz node-$NODE_VERSION \
     && rm -rf $DEVTOOLS_PREFIX/share/
 
 ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
