@@ -130,7 +130,7 @@ RUN yum -y update \
     && make install \
     && strip --strip-all /opt/node-64/bin/* \
     && cd /tmp \
-    && rm -rf node.tar.gz node-$NODE_VERSION \
+    && rm -rf node.tar.gz node-v$NODE_VERSION \
     && rm -rf $DEVTOOLS_PREFIX/share/
 
 ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
