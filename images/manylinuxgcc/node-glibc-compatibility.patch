@@ -177,3 +177,15 @@ diff -Nur node-v13.12.0-orig/deps/uv/src/unix/process.c node-v13.12.0/deps/uv/sr
    if (pipe2(fds, flags | O_CLOEXEC))
      return UV__ERR(errno);
  
+--- node-v13.12.0-orig/node.gyp	2020-03-26 20:00:02.000000000 +0000
++++ node-v13.12.0/node.gyp	2020-04-10 19:47:07.572517729 +0000
+@@ -311,6 +311,9 @@
+           '-Wl,-bnoerrmsg',
+         ],
+       }],
++      ['OS == "linux"', {
++        'ldflags': ['-lrt'],
++      }],
+       ['OS == "linux" and llvm_version != "0.0"', {
+         'libraries': ['-latomic'],
+       }],
