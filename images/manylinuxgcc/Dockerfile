@@ -4,10 +4,9 @@ FROM quay.io/pypa/manylinux1_$ARCH
 LABEL description="A docker image for building portable Linux binaries using modern GCC"
 LABEL maintainer="The Frida Project"
 
-ARG ARCH
 ARG CORES=8
 
-ARG GCC_VERSION=9.3.0
+ARG GCC_VERSION=6.3.0
 ARG BINUTILS_VERSION=2.34
 ARG XZ_VERSION=5.2.5
 ARG TAR_VERSION=1.32
@@ -25,14 +24,17 @@ ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 ADD node-glibc-compatibility.patch /tmp/node-glibc-compatibility.patch
 
 RUN yum -y update \
-    && export FORCE_UNSAFE_CONFIGURE=1
     && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
     && yum clean all \
+    && export FORCE_UNSAFE_CONFIGURE=1 \
     && cd /tmp \
     && curl -L -o gcc.tar.gz "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
     && tar xf gcc.tar.gz \
     && cd gcc-$GCC_VERSION \
-    && sed -i 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' contrib/download_prerequisites \
+    && sed -i \
+        -e 's\wget \curl -OL \g' \
+        -e 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' \
+        contrib/download_prerequisites \
     && contrib/download_prerequisites \
     && mkdir build \
     && cd build \
@@ -124,11 +126,11 @@ RUN yum -y update \
     && cd node-v$NODE_VERSION \
     && patch -p1 < /tmp/node-glibc-compatibility.patch \
     && ./configure \
-        --prefix=/opt/node-64 \
+        --prefix=/opt/node \
         --partly-static \
-    && make -j$CORES LDFLAGS="$LDFLAGS -lrt" \
+    && make -j$CORES \
     && make install \
-    && strip --strip-all /opt/node-64/bin/* \
+    && strip --strip-all /opt/node/bin/* \
     && cd /tmp \
     && rm -rf node.tar.gz node-v$NODE_VERSION \
     && rm -rf $DEVTOOLS_PREFIX/share/
