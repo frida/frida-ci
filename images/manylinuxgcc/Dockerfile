@@ -21,7 +21,7 @@ ARG DEVTOOLS_CFLAGS="-ffunction-sections -fdata-sections"
 ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
-ADD node-glibc-compatibility.patch /tmp/node-glibc-compatibility.patch
+COPY node-glibc-compatibility.patch /tmp/node.patch
 
 RUN yum -y update \
     && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
@@ -47,7 +47,7 @@ RUN yum -y update \
     && cd /tmp \
     && rm -rf gcc.tar.gz gcc-$GCC_VERSION \
     && export \
-        PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
+        PATH="$DEVTOOLS_PREFIX/bin:/opt/python/cp38-cp38/bin:$PATH" \
         CPP="$DEVTOOLS_PREFIX/bin/cpp" \
         CC="$DEVTOOLS_CC" \
         CXX="$DEVTOOLS_CXX" \
@@ -124,7 +124,7 @@ RUN yum -y update \
     && curl -L -o node.tar.gz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
     && tar xf node.tar.gz \
     && cd node-v$NODE_VERSION \
-    && patch -p1 < /tmp/node-glibc-compatibility.patch \
+    && patch -p1 < ../node.patch \
     && ./configure \
         --prefix=/opt/node \
         --partly-static \
@@ -132,7 +132,7 @@ RUN yum -y update \
     && make install \
     && strip --strip-all /opt/node/bin/* \
     && cd /tmp \
-    && rm -rf node.tar.gz node-v$NODE_VERSION \
+    && rm -rf node.patch node.tar.gz node-v$NODE_VERSION \
     && rm -rf $DEVTOOLS_PREFIX/share/
 
 ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
@@ -148,3 +148,5 @@ ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
     OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump" \
     CFLAGS="$DEVTOOLS_CFLAGS" \
     LDFLAGS="$DEVTOOLS_LDFLAGS"
+
+ENTRYPOINT ["/bin/bash"]
