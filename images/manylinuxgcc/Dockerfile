@@ -22,6 +22,8 @@ ARG DEVTOOLS_CFLAGS="-ffunction-sections -fdata-sections"
 ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
+ADD node-glibc-compatibility.patch /tmp/node-glibc-compatibility.patch
+
 RUN yum -y update \
     && export FORCE_UNSAFE_CONFIGURE=1
     && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
@@ -120,8 +122,11 @@ RUN yum -y update \
     && curl -L -o node.tar.gz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
     && tar xf node.tar.gz \
     && cd node-v$NODE_VERSION \
-    && ./configure --prefix=/opt/node-64 \
-    && make -j$CORES \
+    && patch -p1 < /tmp/node-glibc-compatibility.patch \
+    && ./configure \
+        --prefix=/opt/node-64 \
+        --partly-static \
+    && make -j$CORES LDFLAGS="$LDFLAGS -lrt" \
     && make install \
     && strip --strip-all /opt/node-64/bin/* \
     && cd /tmp \
