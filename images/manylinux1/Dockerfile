@@ -32,7 +32,7 @@ RUN source /tmp/frida-env.rc \
         texinfo \
         zlib-devel \
     \
-    && find /usr/include/ -type f -exec sed -i 's/\bextern __always_inline/extern __always_inline __attribute__ ((__gnu_inline__))/g' {} + \
+    && find /usr/include/ -type f -exec sed -i 's/\bextern __always_inline\b/extern __always_inline __attribute__ ((__gnu_inline__))/g' {} + \
     \
     && export FORCE_UNSAFE_CONFIGURE=1 \
     \
