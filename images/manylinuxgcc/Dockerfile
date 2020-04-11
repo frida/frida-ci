@@ -26,8 +26,13 @@ COPY patches/node.patch /tmp/node.patch
 
 RUN source /tmp/frida-env.rc \
     && yum -y update \
-    && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
-    && yum clean all \
+    && yum -y install \
+        flex \
+        glibc-devel.i386 \
+        libgcc.i386 \
+        openssl101e-devel \
+        texinfo \
+        zlib-devel \
     \
     && find /usr/include/ -type f -exec sed -i 's/\bextern __always_inline/extern __always_inline __attribute__ ((__gnu_inline__))/g' {} + \
     \
@@ -77,6 +82,13 @@ RUN source /tmp/frida-env.rc \
         STRIP="$DEVTOOLS_PREFIX/bin/strip" \
         OBJCOPY="$DEVTOOLS_PREFIX/bin/objcopy" \
         OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump" \
+    \
+    && yum -y erase \
+        cmake28 \
+        'devtoolset*' \
+        scl-utils \
+    && yum clean all \
+    && rm -rf /opt/rh/ \
     \
     && frida_enter xz "https://tukaani.org/xz/xz-${XZ_VERSION}.tar.gz" \
     && ./configure --prefix=$DEVTOOLS_PREFIX \
