@@ -36,7 +36,7 @@ RUN source /tmp/frida-env.rc \
     \
     && export FORCE_UNSAFE_CONFIGURE=1 \
     \
-    && frida_enter gcc "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
+    && pkg_enter gcc "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
     && sed -i -e 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' contrib/download_prerequisites \
     && contrib/download_prerequisites \
     && mkdir build \
@@ -47,7 +47,7 @@ RUN source /tmp/frida-env.rc \
         --enable-languages=c,c++ \
     && make -j$CORES \
     && make install-strip \
-    && frida_leave \
+    && pkg_leave \
     \
     && export \
         PATH="$DEVTOOLS_PREFIX/bin:/opt/python/cp38-cp38/bin:$PATH" \
@@ -64,13 +64,13 @@ RUN source /tmp/frida-env.rc \
         CFLAGS="-ffunction-sections -fdata-sections" \
         LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack" \
     \
-    && frida_enter binutils "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
+    && pkg_enter binutils "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
         --enable-gold \
     && make -j$CORES \
     && make install-strip \
-    && frida_leave \
+    && pkg_leave \
     \
     && export \
         LD="$DEVTOOLS_PREFIX/bin/ld.gold" \
@@ -88,19 +88,19 @@ RUN source /tmp/frida-env.rc \
     && yum clean all \
     && rm -rf /opt/rh/ \
     \
-    && frida_enter xz "https://tukaani.org/xz/xz-${XZ_VERSION}.tar.gz" \
+    && pkg_enter xz "https://tukaani.org/xz/xz-${XZ_VERSION}.tar.gz" \
     && ./configure --prefix=$DEVTOOLS_PREFIX \
     && make -j$CORES \
     && make install-strip \
-    && frida_leave \
+    && pkg_leave \
     \
-    && frida_enter gnutar "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.gz" \
+    && pkg_enter gnutar "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.gz" \
     && ./configure --prefix=$DEVTOOLS_PREFIX \
     && make -j$CORES \
     && make install-strip \
-    && frida_leave \
+    && pkg_leave \
     \
-    && frida_enter openssh "https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VERSION}.tar.gz" \
+    && pkg_enter openssh "https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VERSION}.tar.gz" \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
         --with-cflags="$(pkg-config --cflags openssl101e)" \
@@ -110,9 +110,9 @@ RUN source /tmp/frida-env.rc \
     && make install \
     && strip --strip-all $DEVTOOLS_PREFIX/bin/ssh* \
     && rm -rf $DEVTOOLS_PREFIX/sbin/ $DEVTOOLS_PREFIX/libexec/{sftp,ssh}* \
-    && frida_leave \
+    && pkg_leave \
     \
-    && frida_enter perl "https://www.cpan.org/src/5.0/perl-${PERL_VERSION}.tar.gz" \
+    && pkg_enter perl "https://www.cpan.org/src/5.0/perl-${PERL_VERSION}.tar.gz" \
     && ./Configure \
         -des \
         -Dprefix=$DEVTOOLS_PREFIX \
@@ -121,9 +121,9 @@ RUN source /tmp/frida-env.rc \
         -Aldflags="-static-libgcc -fuse-ld=gold $LDFLAGS" \
     && make -j$CORES \
     && make install-strip \
-    && frida_leave \
+    && pkg_leave \
     \
-    && frida_enter node "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
+    && pkg_enter node "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
     && patch -p1 < /tmp/node.patch \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
@@ -131,7 +131,7 @@ RUN source /tmp/frida-env.rc \
     && make -j$CORES \
     && make install \
     && strip --strip-all $DEVTOOLS_PREFIX/bin/node \
-    && frida_leave \
+    && pkg_leave \
     \
     && rm -rf \
         $DEVTOOLS_PREFIX/share/ \

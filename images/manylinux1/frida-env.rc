@@ -1,4 +1,4 @@
-frida_enter ()
+pkg_enter ()
 {
   local pkg=$1
   local url=$2
@@ -17,7 +17,7 @@ frida_enter ()
   frida_current_package=$pkg
 }
 
-frida_leave ()
+pkg_leave ()
 {
   local pkg=$frida_current_package
 
