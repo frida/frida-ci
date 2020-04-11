@@ -29,6 +29,8 @@ RUN source /tmp/frida-env.rc \
     && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
     && yum clean all \
     \
+    && find /usr/include/ -type f -exec sed -i 's/\bextern __always_inline/extern __always_inline __attribute__ ((__gnu_inline__))/g' {} + \
+    \
     && export FORCE_UNSAFE_CONFIGURE=1 \
     \
     && frida_enter gcc "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
