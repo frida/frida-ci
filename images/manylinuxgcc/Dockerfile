@@ -17,8 +17,6 @@ ARG NODE_VERSION=13.12.0
 ARG DEVTOOLS_PREFIX=/opt/devtools
 ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline -fuse-ld=gold"
 ARG DEVTOOLS_CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++ -fuse-ld=gold"
-ARG DEVTOOLS_CFLAGS="-ffunction-sections -fdata-sections"
-ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
 COPY frida-env.rc /tmp/frida-env.rc
@@ -63,8 +61,8 @@ RUN source /tmp/frida-env.rc \
         STRIP="$RHDEV_PREFIX/bin/strip" \
         OBJCOPY="$RHDEV_PREFIX/bin/objcopy" \
         OBJDUMP="$RHDEV_PREFIX/bin/objdump" \
-        CFLAGS="$DEVTOOLS_CFLAGS" \
-        LDFLAGS="$DEVTOOLS_LDFLAGS" \
+        CFLAGS="-ffunction-sections -fdata-sections" \
+        LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack" \
     \
     && frida_enter binutils "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
     && ./configure \
@@ -119,8 +117,8 @@ RUN source /tmp/frida-env.rc \
         -des \
         -Dprefix=$DEVTOOLS_PREFIX \
         -Dcc=$DEVTOOLS_PREFIX/bin/gcc \
-        -Accflags="-fgnu89-inline $DEVTOOLS_CFLAGS" \
-        -Aldflags="-static-libgcc -fuse-ld=gold $DEVTOOLS_LDFLAGS" \
+        -Accflags="$CFLAGS" \
+        -Aldflags="-static-libgcc -fuse-ld=gold $LDFLAGS" \
     && make -j$CORES \
     && make install-strip \
     && frida_leave \
@@ -149,8 +147,6 @@ ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
     RANLIB="$DEVTOOLS_PREFIX/bin/ranlib" \
     STRIP="$DEVTOOLS_PREFIX/bin/strip" \
     OBJCOPY="$DEVTOOLS_PREFIX/bin/objcopy" \
-    OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump" \
-    CFLAGS="$DEVTOOLS_CFLAGS" \
-    LDFLAGS="$DEVTOOLS_LDFLAGS"
+    OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump"
 
 ENTRYPOINT ["/bin/bash"]
