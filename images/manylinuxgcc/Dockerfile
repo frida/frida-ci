@@ -21,16 +21,17 @@ ARG DEVTOOLS_CFLAGS="-ffunction-sections -fdata-sections"
 ARG DEVTOOLS_LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
-COPY node-glibc-compatibility.patch /tmp/node.patch
+COPY frida-env.rc /tmp/frida-env.rc
+COPY patches/node.patch /tmp/node.patch
 
-RUN yum -y update \
+RUN source /tmp/frida-env.rc \
+    && yum -y update \
     && yum -y install flex glibc-devel.i386 libgcc.i386 openssl101e-devel texinfo zlib-devel \
     && yum clean all \
+    \
     && export FORCE_UNSAFE_CONFIGURE=1 \
-    && cd /tmp \
-    && curl -L -o gcc.tar.gz "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
-    && tar xf gcc.tar.gz \
-    && cd gcc-$GCC_VERSION \
+    \
+    && frida_enter gcc "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
     && sed -i \
         -e 's\wget \curl -OL \g' \
         -e 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' \
@@ -44,8 +45,8 @@ RUN yum -y update \
         --enable-languages=c,c++ \
     && make -j$CORES \
     && make install-strip \
-    && cd /tmp \
-    && rm -rf gcc.tar.gz gcc-$GCC_VERSION \
+    && frida_leave \
+    \
     && export \
         PATH="$DEVTOOLS_PREFIX/bin:/opt/python/cp38-cp38/bin:$PATH" \
         CPP="$DEVTOOLS_PREFIX/bin/cpp" \
@@ -60,16 +61,15 @@ RUN yum -y update \
         OBJDUMP="$RHDEV_PREFIX/bin/objdump" \
         CFLAGS="$DEVTOOLS_CFLAGS" \
         LDFLAGS="$DEVTOOLS_LDFLAGS" \
-    && curl -L -o binutils.tar.gz "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
-    && tar xf binutils.tar.gz \
-    && cd binutils-$BINUTILS_VERSION \
+    \
+    && frida_enter binutils "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
         --enable-gold \
     && make -j$CORES \
     && make install-strip \
-    && cd /tmp \
-    && rm -rf binutils.tar.gz binutils-$BINUTILS_VERSION \
+    && frida_leave \
+    \
     && export \
         LD="$DEVTOOLS_PREFIX/bin/ld.gold" \
         AR="$DEVTOOLS_PREFIX/bin/ar" \
@@ -78,25 +78,20 @@ RUN yum -y update \
         STRIP="$DEVTOOLS_PREFIX/bin/strip" \
         OBJCOPY="$DEVTOOLS_PREFIX/bin/objcopy" \
         OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump" \
-    && curl -L -o xz.tar.gz "https://tukaani.org/xz/xz-${XZ_VERSION}.tar.gz" \
-    && tar xf xz.tar.gz \
-    && cd xz-$XZ_VERSION \
+    \
+    && frida_enter xz "https://tukaani.org/xz/xz-${XZ_VERSION}.tar.gz" \
     && ./configure --prefix=$DEVTOOLS_PREFIX \
     && make -j$CORES \
     && make install-strip \
-    && cd /tmp \
-    && rm -rf xz.tar.gz xz-$XZ_VERSION \
-    && curl -L -o gnutar.tar.gz "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.gz" \
-    && tar xf gnutar.tar.gz \
-    && cd tar-$TAR_VERSION \
+    && frida_leave \
+    \
+    && frida_enter gnutar "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.gz" \
     && ./configure --prefix=$DEVTOOLS_PREFIX \
     && make -j$CORES \
     && make install-strip \
-    && cd /tmp \
-    && rm -rf gnutar.tar.gz tar-$TAR_VERSION \
-    && curl -L -o openssh.tar.gz "https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VERSION}.tar.gz" \
-    && tar xf openssh.tar.gz \
-    && cd openssh-$OPENSSH_VERSION \
+    && frida_leave \
+    \
+    && frida_enter openssh "https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VERSION}.tar.gz" \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
         --with-cflags="$(pkg-config --cflags openssl101e)" \
@@ -106,11 +101,9 @@ RUN yum -y update \
     && make install \
     && strip --strip-all $DEVTOOLS_PREFIX/bin/ssh* \
     && rm -rf $DEVTOOLS_PREFIX/sbin/ $DEVTOOLS_PREFIX/libexec/{sftp,ssh}* \
-    && cd /tmp \
-    && rm -rf openssh.tar.gz openssh-$OPENSSH_VERSION \
-    && curl -L -o perl.tar.gz "https://www.cpan.org/src/5.0/perl-${PERL_VERSION}.tar.gz" \
-    && tar xf perl.tar.gz \
-    && cd perl-$PERL_VERSION \
+    && frida_leave \
+    \
+    && frida_enter perl "https://www.cpan.org/src/5.0/perl-${PERL_VERSION}.tar.gz" \
     && ./Configure \
         -des \
         -Dprefix=$DEVTOOLS_PREFIX \
@@ -119,21 +112,21 @@ RUN yum -y update \
         -Aldflags="-static-libgcc -fuse-ld=gold $DEVTOOLS_LDFLAGS" \
     && make -j$CORES \
     && make install-strip \
-    && cd /tmp \
-    && rm -rf perl.tar.gz perl-$PERL_VERSION \
-    && curl -L -o node.tar.gz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
-    && tar xf node.tar.gz \
-    && cd node-v$NODE_VERSION \
-    && patch -p1 < ../node.patch \
+    && frida_leave \
+    \
+    && frida_enter node "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
+    && patch -p1 < /tmp/node.patch \
     && ./configure \
         --prefix=/opt/node \
         --partly-static \
     && make -j$CORES \
     && make install \
-    && strip --strip-all /opt/node/bin/* \
-    && cd /tmp \
-    && rm -rf node.patch node.tar.gz node-v$NODE_VERSION \
-    && rm -rf $DEVTOOLS_PREFIX/share/
+    && strip --strip-all /opt/node/bin/node \
+    && frida_leave \
+    \
+    && rm -rf \
+        $DEVTOOLS_PREFIX/share/ \
+        frida-env.rc
 
 ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
     CPP="$DEVTOOLS_PREFIX/bin/cpp" \

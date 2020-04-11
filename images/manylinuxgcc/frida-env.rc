@@ -1,0 +1,33 @@
+frida_enter ()
+{
+  local pkg=$1
+  local url=$2
+
+  echo ""
+  echo -e "\\033[0;34m\\033[1m***"
+  echo -e "*** Building $pkg"
+  echo -e "***\\033[0m"
+
+  cd /tmp
+  curl -Lo $pkg.tar.gz "$url" || return
+  mkdir $pkg || return
+  cd $pkg
+  tar -x -f ../$pkg.tar.gz --strip-components=1 || return
+
+  frida_current_package=$pkg
+}
+
+frida_leave ()
+{
+  local pkg=$frida_current_package
+
+  if [ -z "$pkg" ]; then
+    echo "ERROR: Leave before enter" > /dev/stderr
+    return 1
+  fi
+
+  cd /tmp
+  rm -rf $pkg.tar.gz $pkg.patch $pkg
+
+  unset frida_current_package
+}
