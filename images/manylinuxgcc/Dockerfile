@@ -15,8 +15,8 @@ ARG PERL_VERSION=5.30.2
 ARG NODE_VERSION=13.12.0
 
 ARG DEVTOOLS_PREFIX=/opt/devtools
-ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc -static-libgcc -fgnu89-inline -fuse-ld=gold"
-ARG DEVTOOLS_CXX="$DEVTOOLS_PREFIX/bin/g++ -static-libgcc -static-libstdc++ -fuse-ld=gold"
+ARG DEVTOOLS_CC="$DEVTOOLS_PREFIX/bin/gcc"
+ARG DEVTOOLS_CXX="$DEVTOOLS_PREFIX/bin/g++"
 ARG RHDEV_PREFIX=/opt/rh/devtoolset-2/root/usr
 
 COPY frida-env.rc /tmp/frida-env.rc
@@ -52,8 +52,8 @@ RUN source /tmp/frida-env.rc \
     && export \
         PATH="$DEVTOOLS_PREFIX/bin:/opt/python/cp38-cp38/bin:$PATH" \
         CPP="$DEVTOOLS_PREFIX/bin/cpp" \
-        CC="$DEVTOOLS_CC" \
-        CXX="$DEVTOOLS_CXX" \
+        CC="$DEVTOOLS_CC -static-libgcc -fuse-ld=gold" \
+        CXX="$DEVTOOLS_CXX -static-libgcc -static-libstdc++ -fuse-ld=gold" \
         LD="$RHDEV_PREFIX/bin/ld.gold" \
         AR="$DEVTOOLS_PREFIX/bin/gcc-ar" \
         NM="$DEVTOOLS_PREFIX/bin/gcc-nm" \
