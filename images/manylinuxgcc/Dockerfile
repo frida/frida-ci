@@ -137,7 +137,7 @@ RUN source /tmp/frida-env.rc \
         $DEVTOOLS_PREFIX/share/ \
         frida-env.rc
 
-ENV PATH="$DEVTOOLS_PREFIX/bin:$PATH" \
+ENV PATH="$DEVTOOLS_PREFIX/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
     CPP="$DEVTOOLS_PREFIX/bin/cpp" \
     CC="$DEVTOOLS_CC" \
     CXX="$DEVTOOLS_CXX" \
