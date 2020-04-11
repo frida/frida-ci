@@ -128,11 +128,11 @@ RUN source /tmp/frida-env.rc \
     && frida_enter node "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.gz" \
     && patch -p1 < /tmp/node.patch \
     && ./configure \
-        --prefix=/opt/node \
+        --prefix=$DEVTOOLS_PREFIX \
         --partly-static \
     && make -j$CORES \
     && make install \
-    && strip --strip-all /opt/node/bin/node \
+    && strip --strip-all $DEVTOOLS_PREFIX/bin/node \
     && frida_leave \
     \
     && rm -rf \
