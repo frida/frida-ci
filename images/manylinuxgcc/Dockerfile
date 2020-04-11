@@ -6,7 +6,7 @@ LABEL maintainer="The Frida Project"
 
 ARG CORES=8
 
-ARG GCC_VERSION=6.3.0
+ARG GCC_VERSION=7.5.0
 ARG BINUTILS_VERSION=2.34
 ARG XZ_VERSION=5.2.5
 ARG TAR_VERSION=1.32
@@ -32,10 +32,7 @@ RUN source /tmp/frida-env.rc \
     && export FORCE_UNSAFE_CONFIGURE=1 \
     \
     && frida_enter gcc "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
-    && sed -i \
-        -e 's\wget \curl -OL \g' \
-        -e 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' \
-        contrib/download_prerequisites \
+    && sed -i -e 's\ftp://gcc.gnu.org\https://gcc.gnu.org\g' contrib/download_prerequisites \
     && contrib/download_prerequisites \
     && mkdir build \
     && cd build \
