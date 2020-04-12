@@ -11,7 +11,7 @@ ARG BINUTILS_VERSION=2.34
 ARG GDB_VERSION=9.1
 ARG XZ_VERSION=5.2.5
 ARG TAR_VERSION=1.32
-ARG OPENSSH_VERSION=8.2p1
+ARG OPENSSH_VERSION=8_2_P1
 ARG PERL_VERSION=5.30.2
 ARG NODE_VERSION=13.12.0
 
@@ -112,7 +112,8 @@ RUN source /tmp/frida-env.rc \
     && make install-strip \
     && pkg_leave \
     \
-    && pkg_enter openssh "https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-${OPENSSH_VERSION}.tar.gz" \
+    && pkg_enter openssh "https://github.com/openssh/openssh-portable/archive/V_${OPENSSH_VERSION}.tar.gz" \
+    && autoreconf -if \
     && ./configure \
         --prefix=$DEVTOOLS_PREFIX \
         --with-cflags="$(pkg-config --cflags openssl101e)" \
