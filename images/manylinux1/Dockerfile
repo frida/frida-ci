@@ -23,6 +23,8 @@ COPY frida-env.rc /tmp/frida-env.rc
 COPY patches/node.patch /tmp/node.patch
 
 RUN source /tmp/frida-env.rc \
+    && rm -f /tmp/GmJETrrg \
+    \
     && yum -y update \
     && yum -y install \
         flex \
