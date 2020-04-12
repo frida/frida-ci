@@ -68,7 +68,12 @@ RUN source /tmp/frida-env.rc \
         --host=$gcc_target_platform \
         --target=$gcc_target_platform \
         --with-cpu=generic \
+        --enable-shared \
+        --enable-threads=posix \
         --enable-checking=release \
+        --with-system-zlib \
+        --enable-__cxa_atexit \
+        --disable-libunwind-exceptions \
         --enable-languages=c,c++ \
         $gcc_extra_opts \
     && make -j$CORES \
