@@ -2,7 +2,7 @@ ARG ARCH=x86_64
 FROM quay.io/pypa/manylinux1_$ARCH
 
 LABEL description="A docker image for building portable Linux binaries using modern GCC"
-LABEL maintainer="The Frida Project"
+LABEL maintainer="oleavr@frida.re"
 
 ARG CORES=8
 
