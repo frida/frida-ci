@@ -4,6 +4,7 @@ FROM quay.io/pypa/manylinux1_$ARCH
 LABEL description="A docker image for building portable Linux binaries using modern GCC"
 LABEL maintainer="oleavr@frida.re"
 
+ARG ARCH
 ARG CORES=8
 
 ARG GCC_VERSION=7.5.0
@@ -26,14 +27,26 @@ COPY patches/node.patch /tmp/node.patch
 RUN source /tmp/frida-env.rc \
     && rm -f /tmp/GmJETrrg \
     \
-    && yum -y update \
-    && yum -y install \
+    && if [ $ARCH = x86_64 ]; then \
+      build_deps="\
         flex \
         glibc-devel.i386 \
         libgcc.i386 \
         openssl101e-devel \
         texinfo \
         zlib-devel \
+      "; \
+    else \
+      build_deps="\
+        flex \
+        openssl101e-devel \
+        texinfo \
+        zlib-devel \
+      "; \
+      echo "exclude=*.x86_64" >> /etc/yum.conf; \
+    fi \
+    && yum -y update \
+    && yum -y install $build_deps \
     \
     && find /usr/include/ -type f -exec sed -i 's/\bextern __always_inline\b/extern __always_inline __attribute__ ((__gnu_inline__))/g' {} + \
     \
@@ -44,10 +57,20 @@ RUN source /tmp/frida-env.rc \
     && contrib/download_prerequisites \
     && mkdir build \
     && cd build \
+    && gcc_target_platform=$(rpm --eval '%{_target_platform}') \
+    && gcc_extra_opts="" \
+    && if [ $ARCH != x86_64 ]; then \
+      gcc_extra_opts="--disable-multilib"; \
+    fi \
     && ../configure \
         --prefix=$DEVTOOLS_PREFIX \
+        --build=$gcc_target_platform \
+        --host=$gcc_target_platform \
+        --target=$gcc_target_platform \
+        --with-cpu=generic \
         --enable-checking=release \
         --enable-languages=c,c++ \
+        $gcc_extra_opts \
     && make -j$CORES \
     && make install-strip \
     && pkg_leave \
