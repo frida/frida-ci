@@ -63,7 +63,7 @@ RUN source /tmp/frida-env.rc \
         STRIP="$RHDEV_PREFIX/bin/strip" \
         OBJCOPY="$RHDEV_PREFIX/bin/objcopy" \
         OBJDUMP="$RHDEV_PREFIX/bin/objdump" \
-        CFLAGS="-ffunction-sections -fdata-sections" \
+        CFLAGS="-pipe -ffunction-sections -fdata-sections" \
         LDFLAGS="-Wl,--icf=all -Wl,--gc-sections -Wl,-z,noexecstack" \
     \
     && pkg_enter binutils "https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.gz" \
