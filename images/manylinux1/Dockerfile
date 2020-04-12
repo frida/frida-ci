@@ -8,6 +8,7 @@ ARG CORES=8
 
 ARG GCC_VERSION=7.5.0
 ARG BINUTILS_VERSION=2.34
+ARG GDB_VERSION=9.1
 ARG XZ_VERSION=5.2.5
 ARG TAR_VERSION=1.32
 ARG OPENSSH_VERSION=8.2p1
@@ -82,6 +83,15 @@ RUN source /tmp/frida-env.rc \
         STRIP="$DEVTOOLS_PREFIX/bin/strip" \
         OBJCOPY="$DEVTOOLS_PREFIX/bin/objcopy" \
         OBJDUMP="$DEVTOOLS_PREFIX/bin/objdump" \
+    \
+    && pkg_enter gdb "https://ftp.gnu.org/gnu/gdb/gdb-${GDB_VERSION}.tar.gz" \
+    && mkdir build \
+    && cd build \
+    && ../configure --prefix=$DEVTOOLS_PREFIX \
+    && (while ! make -j$CORES; do make -j$CORES; make; done) \
+    && make install \
+    && strip --strip-all $DEVTOOLS_PREFIX/bin/gdb \
+    && pkg_leave \
     \
     && yum -y erase \
         cmake28 \
