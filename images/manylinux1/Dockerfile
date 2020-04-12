@@ -140,6 +140,7 @@ RUN source /tmp/frida-env.rc \
         frida-env.rc
 
 ENV PATH="$DEVTOOLS_PREFIX/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    LD_LIBRARY_PATH="$DEVTOOLS_PREFIX/lib64:$DEVTOOLS_PREFIX/lib:/usr/local/lib64:/usr/local/lib" \
     CPP="$DEVTOOLS_PREFIX/bin/cpp" \
     CC="$DEVTOOLS_CC" \
     CXX="$DEVTOOLS_CXX" \
