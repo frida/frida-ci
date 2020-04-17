@@ -1,0 +1,33 @@
+diff -Nur libffi-3.3-orig/configure.ac libffi-3.3/configure.ac
+--- libffi-3.3-orig/configure.ac	2019-11-23 14:58:22.000000000 +0100
++++ libffi-3.3/configure.ac	2020-04-17 01:35:43.695711719 +0200
+@@ -352,28 +352,7 @@
+ [  --disable-multi-os-directory
+                           disable use of gcc --print-multi-os-directory to change the library installation directory])
+                           
+-# These variables are only ever used when we cross-build to X86_WIN32.
+-# And we only support this with GCC, so...
+-if test "x$GCC" = "xyes"; then
+-  if test -n "$with_cross_host" &&
+-     test x"$with_cross_host" != x"no"; then
+-    toolexecdir='${exec_prefix}'/'$(target_alias)'
+-    toolexeclibdir='${toolexecdir}'/lib
+-  else
+-    toolexecdir='${libdir}'/gcc-lib/'$(target_alias)'
+-    toolexeclibdir='${libdir}'
+-  fi
+-  if test x"$enable_multi_os_directory" != x"no"; then
+-    multi_os_directory=`$CC $CFLAGS -print-multi-os-directory`
+-    case $multi_os_directory in
+-      .) ;; # Avoid trailing /.
+-      ../*) toolexeclibdir=$toolexeclibdir/$multi_os_directory ;;
+-    esac
+-  fi
+-  AC_SUBST(toolexecdir)
+-else
+-  toolexeclibdir='${libdir}'
+-fi
++toolexeclibdir='${libdir}'
+ AC_SUBST(toolexeclibdir)
+ 
+ # Check linker support.

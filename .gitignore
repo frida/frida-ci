@@ -1,10 +1,11 @@
 /__build__
 /glib
+/images/manylinux/docker/sources/
 /json-glib
 /libffi
 /libgee
+/sdk-windows-*.exe
+/toolchain-windows-*.exe
 /v8
 /vala
 /zlib-*
-/sdk-windows-*.exe
-/toolchain-windows-*.exe
