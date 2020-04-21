@@ -57,7 +57,7 @@ GIT_DOWNLOAD_URL=https://github.com/git/git/archive
 
 PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python
 # of the form <maj>.<min>.<rev> or <maj>.<min>.<rev>rc<n>
-CPYTHON_VERSIONS="2.7.17 3.8.2"
+CPYTHON_VERSIONS="2.7.18 3.8.2"
 
 NODE_VERSION=13.12.0
 NODE_ROOT=node-v${NODE_VERSION}
