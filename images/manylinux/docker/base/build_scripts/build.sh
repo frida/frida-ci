@@ -103,6 +103,7 @@ pkg_enter binutils
     --prefix=$DEVTOOLS_PREFIX \
     --libdir=$DEVTOOLS_PREFIX/lib64 \
     --enable-gold \
+    --enable-compressed-debug-sections=none \
     > /dev/null
 make -j$CORES > /dev/null
 make install-strip > /dev/null
