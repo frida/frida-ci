@@ -4,7 +4,11 @@ LABEL maintainer="oleavr@frida.re"
 ENV PATH="/opt/python-64/cp27-cp27mu/bin:/opt/python-64/cp38-cp38/bin:/opt/node-64/bin:$PATH"
 
 RUN \
-	pip3 install \
+	yum -y install \
+		bison \
+		flex \
+	&& yum -y clean all \
+	&& pip3 install \
 		agithub==2.2.2 \
 		buildbot-worker==2.7.0 \
 		requests==2.23.0 \
