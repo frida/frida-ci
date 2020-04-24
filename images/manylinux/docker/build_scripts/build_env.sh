@@ -59,9 +59,9 @@ PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python
 # of the form <maj>.<min>.<rev> or <maj>.<min>.<rev>rc<n>
 CPYTHON_VERSIONS="2.7.18 3.8.2"
 
-NODE_VERSION=13.13.0
+NODE_VERSION=14.0.0
 NODE_ROOT=node-v${NODE_VERSION}
-NODE_HASH=bbcb1bbcf78777e402ca220edd8f5c23475ed0164025d8a6bc3367e3e3ac9577
+NODE_HASH=5ee2a8d3036a1652ec93bbd8b5812e0ae41e0450af729b14df4a27afc6f17cf8
 NODE_DOWNLOAD_URL=https://nodejs.org/dist/v${NODE_VERSION}
 
 export \
