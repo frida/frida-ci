@@ -1,4 +1,5 @@
 FROM fridadotre/manylinux-x86_64
+
 LABEL maintainer="oleavr@frida.re"
 
 ENV PATH="/opt/python-64/cp27-cp27mu/bin:/opt/python-64/cp38-cp38/bin:/opt/node-64/bin:$PATH"

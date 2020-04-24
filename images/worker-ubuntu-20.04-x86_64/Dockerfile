@@ -1,4 +1,5 @@
-FROM arm64v8/ubuntu:16.04
+FROM ubuntu:20.04
+
 LABEL maintainer="oleavr@frida.re"
 
 RUN apt-get update \
@@ -6,13 +7,11 @@ RUN apt-get update \
 	build-essential \
 	curl \
 	git \
+	lib32stdc++-9-dev \
+	libc6-dev-i386 \
 	locales \
-	python-colorama \
-	python-dev \
-	python-pip \
-	python-prompt-toolkit \
-	python-pygments \
-	python-setuptools \
+	nodejs \
+	npm \
 	python3-colorama \
 	python3-dev \
 	python3-pip \
@@ -25,12 +24,11 @@ RUN apt-get update \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
 	&& update-locale LANG=en_US.UTF-8 \
-	&& curl -sL https://deb.nodesource.com/setup_10.x | bash - \
-	&& apt-get install -y nodejs \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& pip3 install agithub==2.1 buildbot-worker==2.0.1 \
-	&& gem install rake --no-ri --no-rdoc \
-	&& gem install fpm -v 1.10.0 --no-ri --no-rdoc \
+	&& pip3 install \
+		agithub==2.2.2 \
+		buildbot-worker==2.7.0 \
+	&& gem install fpm -v 1.11.0 --no-document \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
 	&& mkdir -p /home/buildbot/.credentials \
@@ -38,9 +36,9 @@ RUN apt-get update \
 	&& ln -s .credentials/npmrc /home/buildbot/.npmrc \
 	&& ln -s .credentials/pypirc /home/buildbot/.pypirc \
 	&& chown -R buildbot:buildbot /home/buildbot \
-	&& mkdir -p /worker/info /worker/frida-ubuntu_16_04-arm64/build \
+	&& mkdir -p /worker/info /worker/frida-ubuntu_20_04-x86_64/build \
 	&& echo 'Ole Andre Vadla Ravnas <oleavr@frida.re>' > /worker/info/admin \
-	&& echo 'Ubuntu 16.04 arm64' > /worker/info/host \
+	&& echo 'Ubuntu 20.04 x86_64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
 
@@ -50,7 +48,7 @@ ENV LC_ALL en_US.UTF-8
 
 USER buildbot
 WORKDIR /worker
-VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_16_04-arm64/build"]
+VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_20_04-x86_64/build"]
 
 ENTRYPOINT ["buildbot-worker"]
 CMD ["start", "--nodaemon"]
