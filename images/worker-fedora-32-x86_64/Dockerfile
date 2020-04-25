@@ -11,11 +11,8 @@ RUN dnf install -y \
 	libstdc++-static.x86_64 \
 	make \
 	nodejs \
-	python3-colorama \
 	python3-devel \
 	python3-pip \
-	python3-prompt-toolkit \
-	python3-pygments \
 	python3-requests \
 	python3-setuptools \
 	rpmdevtools \

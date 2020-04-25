@@ -12,11 +12,8 @@ RUN apt-get update \
 	locales \
 	nodejs \
 	npm \
-	python3-colorama \
 	python3-dev \
 	python3-pip \
-	python3-prompt-toolkit \
-	python3-pygments \
 	python3-requests \
 	python3-setuptools \
 	ruby \
