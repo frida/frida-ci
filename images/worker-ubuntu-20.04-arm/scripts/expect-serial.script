@@ -1,0 +1,31 @@
+proc runCommand { command } {
+    expect "# "
+    send -- "$command \n"
+}
+
+proc checkResult { } {
+    runCommand "echo RESULT $?"
+
+    expect {
+        timeout { error "Timeout" }
+        -re {.*RESULT (\d+).*} { set resultCode $expect_out(1,string)}
+    }
+
+    if { $resultCode != 0 } {
+        error "Command Failed"
+    }
+}
+
+set timeout -1
+log_user 1
+log_file -noappend /proc/self/fd/2
+send -- "\n"
+
+runCommand "$argv"
+checkResult
+
+runCommand "halt -f"
+expect "reboot: System halted"
+
+log_file
+exit

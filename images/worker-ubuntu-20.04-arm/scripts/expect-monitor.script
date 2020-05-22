@@ -1,0 +1,8 @@
+log_user 1
+log_file -noappend /proc/self/fd/2
+
+expect "(qemu)"
+send -- "q \n"
+
+log_file
+exit
