@@ -1,5 +1,7 @@
 #!/bin/bash
+
 set -x
+
 groupadd -r buildbot -g 500
 useradd -r -g buildbot buildbot -u 500
 

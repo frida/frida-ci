@@ -1,10 +1,23 @@
 # frida-docker
-This docker image is based on Ubuntu 20.04 x86_64. Within this docker container, an ARM based target image is constructed consisting of a kernel, initrd and rootfs. This is later launched within `qemu-system-aarch64` to provide our target. Note that this target is based on a 64-bit kernel running 32-bit apps. Ubuntu 20.04 has dropped a 32bit ARM distribution and it is expected that many other distributions may do also. However, it is not uncommon for legacy apps to be more complex to port and hence AARCH64 architecture has strong support for running AARCH32 apps in user-space.
 
-Henceforth, the ARM based environment used to run the test will be referred to as the `target`. The docker environment in which this is all constructed will be referred to as the `container` and lastly the operating system on which the `docker` commands are run will be referred to as the `host`.
+This Docker image is based on Ubuntu 20.04 x86_64. Within this Docker container,
+an ARM based target image is constructed consisting of a kernel, initrd and
+rootfs. This is later launched within `qemu-system-aarch64` to provide our
+target. Note that this target is based on a 64-bit kernel running 32-bit apps.
+Ubuntu 20.04 has dropped a 32bit ARM distribution and it is expected that many
+other distributions may do also. However, it is not uncommon for legacy apps to
+be more complex to port and hence AArch64 architecture has strong support for
+running AArch32 apps in user-space.
+
+Henceforth, the ARM based environment used to run the test will be referred to
+as the `target`. The Docker environment in which this is all constructed will be
+referred to as the `container` and lastly the operating system on which the
+`docker` commands are run will be referred to as the `host`.
 
 ## Building
-To build the image, run `./build.sh`. Note that this may take up to an hour, even on a modestly equiped workstation.
+
+To build the image, run `./build.sh`. Note that this may take up to an hour,
+even on a modestly equipped workstation.
 
 ## QEMU User
 
@@ -68,12 +81,13 @@ RUN qemu-arm ./build/tmp_thin-linux-arm/frida-gum/tests/gum-tests \
 RUN qemu-arm ./build/tmp_thin-linux-arm/frida-gum/tests/gum-tests \
         -p /Core/ThumbRelocator
 ```
-This first section of the Dockerfile installs the necessary tools to cross compile frida for AARCH32. It then builds the SDK, Gum and Core. The `gum-tests` are then run on `qemu-arm` which is able to carry out many of the tests, but runs into problems when Frida attempts to `ptrace` itself.
+
+This first section of the Dockerfile installs the necessary tools to cross compile frida for AArch32. It then builds the SDK, Gum and Core. The `gum-tests` are then run on `qemu-arm` which is able to carry out many of the tests, but runs into problems when Frida attempts to `ptrace` itself.
 
 The `gum-tests` binary is later transferred to the target image to confirm the configuration of the target is suitable for running the tests. This stage of the Dockerfile may be removed at a later point once the buildbot in the target compiles frida natively and runs the tests. Perhaps a more representative configuration might be for the current Dockerfile to be split into two buildbot targets, one including the tools to cross compile Frida and the other containing only a target suitable for executing the tests. This configuration should be suitable to allow us to regression test Frida on Linux ARM32 targets. A later improvement may be to provide a much older glibc-2.5 based toolchain (perhaps based on [crosstool-ng](https://github.com/crosstool-ng/crosstool-ng)) and target (perhaps based on CentOS 5) like that used for the [manylinux build for x86_64](https://github.com/frida/frida-ci/blob/master/images/worker-manylinux-x86_64/Dockerfile).
 
 ## Busybox
-We next build busybox. Note that we build this for AARCH64 as we have a 64-bit target (as such we first need to install the cross compiler for AARCH64 as to this point, we have only build Frida for AARCH32). We have to use the HEAD from github since the latest release has some problems with deprecated functions such as `stime` in the latest `glibc` (2.31). Note that we also configure busybox as just on large monolithic static binary so that we don't have to worry about copying any shared object dependencies to our target.
+We next build busybox. Note that we build this for AArch64 as we have a 64-bit target (as such we first need to install the cross compiler for AArch64 as to this point, we have only build Frida for AArch32). We have to use the HEAD from github since the latest release has some problems with deprecated functions such as `stime` in the latest `glibc` (2.31). Note that we also configure busybox as just on large monolithic static binary so that we don't have to worry about copying any shared object dependencies to our target.
 
 ```Dockerfile
 WORKDIR /root/
@@ -89,7 +103,7 @@ RUN apt-get install -y qemu-system-arm
 ```
 
 ## Kernel
-We next build the kernel, we just use the latest kernel. In contrast to AARCH32, on AARCH64 the kernel has just a single default configuration file rather than multiple for different targets. This is because the kernel is capable of using the Device Tree Blob to understand the target hardware (a binary description of the hardware, used as on embedded architectures the ability to probe and detect hardware is often not supported) rather than having to be customized. Note we also add `CONFIG_BINFMT_MISC` to our configuration as we will be using this support later to run AARCH32 binaries on our AARCH64 kernel.
+We next build the kernel, we just use the latest kernel. In contrast to AArch32, on AArch64 the kernel has just a single default configuration file rather than multiple for different targets. This is because the kernel is capable of using the Device Tree Blob to understand the target hardware (a binary description of the hardware, used as on embedded architectures the ability to probe and detect hardware is often not supported) rather than having to be customized. Note we also add `CONFIG_BINFMT_MISC` to our configuration as we will be using this support later to run AArch32 binaries on our AArch64 kernel.
 ```Dockerfile
 WORKDIR /root/
 RUN curl https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.4.41.tar.xz \
@@ -102,7 +116,7 @@ RUN apt-get install -y bc
 RUN ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- make -j8 Image
 ```
 ## RootFS
-We next build our rootfs. As a basis for our target, we select the official Ubuntu AARCH64 file-system image intended for use in ARM container based cloud deployments. This is provided as a tarball, but we use `genext2fs` to build an ext2 image. We chose this as our root file-system as we want something writeable and persistent and ext2 being older is better supported with tooling. Note that we cannot simply create a flat image file an mount it using a loopback device since the Docker security model prevents the use of loopback devices. In any case, this would add a dependency on the host kernel (since Docker runs in a [namespace](https://lwn.net/Articles/531114/) in the host kernel). 
+We next build our rootfs. As a basis for our target, we select the official Ubuntu AArch64 file-system image intended for use in ARM container based cloud deployments. This is provided as a tarball, but we use `genext2fs` to build an ext2 image. We chose this as our root file-system as we want something writeable and persistent and ext2 being older is better supported with tooling. Note that we cannot simply create a flat image file an mount it using a loopback device since the Docker security model prevents the use of loopback devices. In any case, this would add a dependency on the host kernel (since Docker runs in a [namespace](https://lwn.net/Articles/531114/) in the host kernel). 
 ```Dockerfile
 WORKDIR /root/
 RUN curl https://partner-images.canonical.com/core/focal/current/ubuntu-focal-core-cloudimg-arm64-root.tar.gz \
@@ -149,20 +163,20 @@ setsid sh -c 'exec bash </dev/ttyAMA0 >/dev/ttyAMA0 2>&1'
 
 This mounts the usual pseudo file-systems exposed by the kernel. It then starts the binfmt-support service if it is present. This is installed later in the target configuration process and so it may not exist initially when the target is started to carry out configuration. Next, we see two file-systems being mounted. These use plan9fs support in QEMU using the virtio transport to allow us to mount folder from the container into the target. Lastly, we see some [voodoo ](http://lists.busybox.net/pipermail/busybox/2010-July/072895.html) to allow us to access a controlling [TTY](https://www.linusakesson.net/programming/tty/) for a bash session.
 
-The other files copied to the rootfs configure the binfmt mechanism to support AARCH32. The file `/opt/runarm.sh` is used to launch an AARCH32 binary using the loader.
+The other files copied to the rootfs configure the binfmt mechanism to support AArch32. The file `/opt/run-arm.sh` is used to launch an AArch32 binary using the loader.
 ```bash
 #!/bin/bash
 LD_LIBRARY_PATH=/usr/arm-linux-gnueabi/lib /usr/arm-linux-gnueabi/lib/ld-2.31.so $@
 ```
 
-The file `/var/lib/binfmts/arm` is used to configure the binfmt mechanism to parse and identify an AARCH32 elf and identify it and run the launcher.
+The file `/var/lib/binfmts/arm` is used to configure the binfmt mechanism to parse and identify an AArch32 elf and identify it and run the launcher.
 ```
 arm
 magic
 0
 \x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00
 
-/opt/runarm.sh
+/opt/run-arm.sh
 ```
 Lastly, `/etc/resolv.conf` is provided to configure the target to use google for DNS resolution.
 
@@ -218,7 +232,7 @@ We now have all of the artifacts required for our target environment, but we now
 We can see that the command and control of the target is supported by a number of [scripts](https://github.com/WorksButNotTested/frida-ci/tree/feature/worker-arm/images/worker-ubuntu-20.04-arm/scripts). 
 
 ### Test.sh
-First, let's look at the `/opt/test.sh` script. This is not used for building the image, but is provided so that a developer can start and interact with the target from the terminal inside the docker image.
+First, let's look at the `/opt/test.sh` script. This is not used for building the image, but is provided so that a developer can start and interact with the target from the terminal inside the Docker image.
 
 ```bash
 QEMU_AUDIO_DRV=none \
@@ -372,7 +386,7 @@ RUN /opt/target.sh PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:
         gem install fpm -v 1.11.0 --no-document
 ```
 
-Lastly, we use a `COPY` directive to copy the `buildbot.tac` to the docker container and `e2tools` to subsequently copy the file into the target ext2 file-system. Note that we carefully control the permissions and UID/GID of the files we copy (the `buildbot` user is configured with UID/GID 500).
+Lastly, we use a `COPY` directive to copy the `buildbot.tac` to the Docker container and `e2tools` to subsequently copy the file into the target ext2 file-system. Note that we carefully control the permissions and UID/GID of the files we copy (the `buildbot` user is configured with UID/GID 500).
 ```
 RUN apt-get install -y e2tools
 COPY ./buildbot.sh /root/buildbot.sh
