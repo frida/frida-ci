@@ -16,6 +16,7 @@ RUN apt-get update \
 	python3-pip \
 	python3-requests \
 	python3-setuptools \
+	qtdeclarative5-dev \
 	ruby \
 	ruby-dev \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
