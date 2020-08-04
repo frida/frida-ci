@@ -9,19 +9,32 @@ RUN apt-get update \
 	git \
 	lib32stdc++-9-dev \
 	libc6-dev-i386 \
+	libgl1-mesa-dev \
 	locales \
 	nodejs \
 	npm \
+	p7zip \
 	python3-dev \
 	python3-pip \
 	python3-requests \
 	python3-setuptools \
-	qtdeclarative5-dev \
 	ruby \
 	ruby-dev \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
 	&& update-locale LANG=en_US.UTF-8 \
+	&& mkdir /opt/qt \
+	&& cd /opt/qt \
+	&& curl -L -o qtbase.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958qtbase-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
+	&& curl -L -o qtdeclarative.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958qtdeclarative-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
+	&& curl -L -o icu.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958icu-linux-Rhel7.2-x64.7z \
+	&& (for pkg in qtbase qtdeclarative icu; do \
+		7zr x $pkg.7z || exit $?; \
+	done) \
+	&& rm *.7z \
+	&& mv 5.15.1/gcc_64/* . \
+	&& rm -r 5.15.1 \
+	&& sed -i -e "s,QT_EDITION = Enterprise,QT_EDITION = OpenSource," -e "/QT_LICHECK = /d" mkspecs/qconfig.pri \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& pip3 install \
 		agithub==2.2.2 \
