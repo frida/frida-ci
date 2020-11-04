@@ -11,8 +11,8 @@ RUN \
 	&& yum -y clean all \
 	&& pip3 install \
 		agithub==2.2.2 \
-		buildbot-worker==2.7.0 \
-		requests==2.23.0 \
+		buildbot-worker==2.8.4 \
+		requests==2.24.0 \
 	\
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \

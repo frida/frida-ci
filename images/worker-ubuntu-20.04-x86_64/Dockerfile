@@ -25,9 +25,9 @@ RUN apt-get update \
 	&& update-locale LANG=en_US.UTF-8 \
 	&& mkdir /opt/qt \
 	&& cd /opt/qt \
-	&& curl -L -o qtbase.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958qtbase-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
-	&& curl -L -o qtdeclarative.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958qtdeclarative-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
-	&& curl -L -o icu.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202007300958icu-linux-Rhel7.2-x64.7z \
+	&& curl -L -o qtbase.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202009071110qtbase-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
+	&& curl -L -o qtdeclarative.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202009071110qtdeclarative-Linux-RHEL_7_6-GCC-Linux-RHEL_7_6-X86_64.7z \
+	&& curl -L -o icu.7z https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5151/qt.qt5.5151.gcc_64/5.15.1-0-202009071110icu-linux-Rhel7.2-x64.7z \
 	&& (for pkg in qtbase qtdeclarative icu; do \
 		7zr x $pkg.7z || exit $?; \
 	done) \
@@ -38,7 +38,7 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& pip3 install \
 		agithub==2.2.2 \
-		buildbot-worker==2.7.0 \
+		buildbot-worker==2.8.4 \
 	&& gem install fpm -v 1.11.0 --no-document \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
