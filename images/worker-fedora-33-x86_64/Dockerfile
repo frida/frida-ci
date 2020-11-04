@@ -1,4 +1,4 @@
-FROM fedora:32
+FROM fedora:33
 
 LABEL maintainer="oleavr@frida.re"
 
@@ -21,7 +21,7 @@ RUN dnf install -y \
 	&& dnf clean all \
 	&& pip3 install \
 		agithub==2.2.2 \
-		buildbot-worker==2.7.0 \
+		buildbot-worker==2.8.4 \
 	&& gem install fpm -v 1.11.0 --no-document \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
@@ -30,15 +30,15 @@ RUN dnf install -y \
 	&& ln -s .credentials/npmrc /home/buildbot/.npmrc \
 	&& ln -s .credentials/pypirc /home/buildbot/.pypirc \
 	&& chown -R buildbot:buildbot /home/buildbot \
-	&& mkdir -p /worker/info /worker/frida-fedora_32-x86_64/build \
+	&& mkdir -p /worker/info /worker/frida-fedora_33-x86_64/build \
 	&& echo 'Ole Andre Vadla Ravnas <oleavr@frida.re>' > /worker/info/admin \
-	&& echo 'Fedora 32 x86_64' > /worker/info/host \
+	&& echo 'Fedora 33 x86_64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
 
 USER buildbot
 WORKDIR /worker
-VOLUME ["/home/buildbot/.credentials", "/worker/frida-fedora_32-x86_64/build"]
+VOLUME ["/home/buildbot/.credentials", "/worker/frida-fedora_33-x86_64/build"]
 
 ENTRYPOINT ["buildbot-worker"]
 CMD ["start", "--nodaemon"]
