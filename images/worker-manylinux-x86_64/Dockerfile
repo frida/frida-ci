@@ -13,13 +13,18 @@ RUN \
 		agithub==2.2.2 \
 		buildbot-worker==2.8.4 \
 		requests==2.24.0 \
+		s3cmd==2.1.0 \
+	&& npm install -g \
+		cloudflare-cli@4.1.0 \
 	\
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
 	&& mkdir -p /home/buildbot/.credentials \
+	&& ln -s .credentials/cfcli.yml /home/buildbot/.cfcli.yml \
 	&& ln -s .credentials/github-token /home/buildbot/.frida-release-github-token \
 	&& ln -s .credentials/npmrc /home/buildbot/.npmrc \
 	&& ln -s .credentials/pypirc /home/buildbot/.pypirc \
+	&& ln -s .credentials/s3cfg /home/buildbot/.s3cfg \
 	&& chown -R buildbot:buildbot /home/buildbot \
 	&& mkdir -p /worker/info /worker/frida-manylinux-x86_64/build \
 	&& echo 'Ole Andre Vadla Ravnas <oleavr@frida.re>' > /worker/info/admin \
