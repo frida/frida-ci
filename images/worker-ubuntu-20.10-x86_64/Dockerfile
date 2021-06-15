@@ -24,8 +24,8 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& pip3 install \
 		agithub==2.2.2 \
-		buildbot-worker==2.8.4 \
-	&& gem install fpm -v 1.11.0 --no-document \
+		buildbot-worker==3.1.1 \
+	&& gem install fpm -v 1.12.0 --no-document \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
 	&& mkdir -p /home/buildbot/.credentials \

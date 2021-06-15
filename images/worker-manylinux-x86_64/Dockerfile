@@ -11,11 +11,11 @@ RUN \
 	&& yum -y clean all \
 	&& pip3 install \
 		agithub==2.2.2 \
-		buildbot-worker==2.8.4 \
-		requests==2.24.0 \
+		buildbot-worker==3.1.1 \
+		requests==2.25.1 \
 		s3cmd==2.1.0 \
 	&& npm install -g \
-		cloudflare-cli@4.1.0 \
+		cloudflare-cli@4.2.0 \
 	\
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
