@@ -1,4 +1,4 @@
-FROM ubuntu:20.10
+FROM ubuntu:21.04
 
 LABEL maintainer="oleavr@frida.re"
 
@@ -33,9 +33,9 @@ RUN apt-get update \
 	&& ln -s .credentials/npmrc /home/buildbot/.npmrc \
 	&& ln -s .credentials/pypirc /home/buildbot/.pypirc \
 	&& chown -R buildbot:buildbot /home/buildbot \
-	&& mkdir -p /worker/info /worker/frida-ubuntu_20_10-x86_64/build \
+	&& mkdir -p /worker/info /worker/frida-ubuntu_21_04-x86_64/build \
 	&& echo 'Ole Andre Vadla Ravnas <oleavr@frida.re>' > /worker/info/admin \
-	&& echo 'Ubuntu 20.10 x86_64' > /worker/info/host \
+	&& echo 'Ubuntu 21.04 x86_64' > /worker/info/host \
 	&& chown -R buildbot:buildbot /worker
 COPY --chown=buildbot:buildbot buildbot.tac /worker/buildbot.tac
 
@@ -45,7 +45,7 @@ ENV LC_ALL en_US.UTF-8
 
 USER buildbot
 WORKDIR /worker
-VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_20_10-x86_64/build"]
+VOLUME ["/home/buildbot/.credentials", "/worker/frida-ubuntu_21_04-x86_64/build"]
 
 ENTRYPOINT ["buildbot-worker"]
 CMD ["start", "--nodaemon"]
