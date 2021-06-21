@@ -9,7 +9,7 @@ RUN \
 		bison \
 		flex \
 	&& yum -y clean all \
-	&& pip3 install \
+	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
 		buildbot-worker==3.1.1 \
 		requests==2.25.1 \

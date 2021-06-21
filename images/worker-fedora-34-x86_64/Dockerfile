@@ -21,7 +21,7 @@ RUN dnf install -y \
 	ruby-devel \
 	which \
 	&& dnf clean all \
-	&& pip3 install \
+	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
 		buildbot-worker==3.1.1 \
 	&& gem install fpm -v 1.12.0 --no-document \
