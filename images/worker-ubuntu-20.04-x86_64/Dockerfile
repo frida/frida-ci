@@ -36,7 +36,7 @@ RUN apt-get update \
 	&& rm -r 5.15.2 \
 	&& sed -i -e "s,QT_EDITION = Enterprise,QT_EDITION = OpenSource," -e "/QT_LICHECK = /d" mkspecs/qconfig.pri \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& pip3 install \
+	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
 		buildbot-worker==3.1.1 \
 	&& gem install fpm -v 1.12.0 --no-document \
