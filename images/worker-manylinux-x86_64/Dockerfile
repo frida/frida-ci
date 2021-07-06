@@ -12,6 +12,7 @@ RUN \
 	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
 		buildbot-worker==3.1.1 \
+		python-magic==0.4.18 \
 		requests==2.25.1 \
 		s3cmd==2.1.0 \
 	&& npm install -g \
