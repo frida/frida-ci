@@ -4,22 +4,22 @@ LABEL maintainer="oleavr@frida.re"
 
 RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
-	build-essential \
-	curl \
-	git \
-	lib32stdc++-9-dev \
-	libc6-dev-i386 \
-	libgl1-mesa-dev \
-	locales \
-	nodejs \
-	npm \
-	p7zip \
-	python3-dev \
-	python3-pip \
-	python3-requests \
-	python3-setuptools \
-	ruby \
-	ruby-dev \
+		build-essential \
+		curl \
+		git \
+		lib32stdc++-9-dev \
+		libc6-dev-i386 \
+		libgl1-mesa-dev \
+		locales \
+		nodejs \
+		npm \
+		p7zip \
+		python3-dev \
+		python3-pip \
+		python3-requests \
+		python3-setuptools \
+		ruby \
+		ruby-dev \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
 	&& update-locale LANG=en_US.UTF-8 \

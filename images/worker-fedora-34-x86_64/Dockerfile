@@ -2,24 +2,25 @@ FROM fedora:34
 
 LABEL maintainer="oleavr@frida.re"
 
-RUN dnf install -y \
-	gcc-c++ \
-	git-core \
-	glibc-devel.i686 \
-	glibc-devel.x86_64 \
-	libatomic.i686 \
-	libatomic.x86_64 \
-	libstdc++-static.i686 \
-	libstdc++-static.x86_64 \
-	make \
-	nodejs \
-	python3-devel \
-	python3-pip \
-	python3-requests \
-	python3-setuptools \
-	rpmdevtools \
-	ruby-devel \
-	which \
+RUN \
+	dnf install -y \
+		gcc-c++ \
+		git-core \
+		glibc-devel.i686 \
+		glibc-devel.x86_64 \
+		libatomic.i686 \
+		libatomic.x86_64 \
+		libstdc++-static.i686 \
+		libstdc++-static.x86_64 \
+		make \
+		nodejs \
+		python3-devel \
+		python3-pip \
+		python3-requests \
+		python3-setuptools \
+		rpmdevtools \
+		ruby-devel \
+		which \
 	&& dnf clean all \
 	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
