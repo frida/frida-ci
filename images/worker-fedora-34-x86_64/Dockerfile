@@ -25,7 +25,9 @@ RUN \
 	&& pip3 install --no-cache-dir \
 		agithub==2.2.2 \
 		buildbot-worker==3.1.1 \
-	&& gem install fpm -v 1.12.0 --no-document \
+	&& gem install --no-document \
+		fpm:1.12.0 \
+		rexml:3.2.4 \
 	&& groupadd -r buildbot \
 	&& useradd -r -g buildbot buildbot \
 	&& mkdir -p /home/buildbot/.credentials \
