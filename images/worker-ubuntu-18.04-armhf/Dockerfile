@@ -19,8 +19,9 @@ RUN apt-get update \
 		nodejs \
 		python3.8-dev \
 		python3.8-full \
+	&& ln -sf python3.8 /usr/bin/python3 \
 	&& curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
-	&& python3.8 get-pip.py \
+	&& python3 get-pip.py \
 	&& rm get-pip.py \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
