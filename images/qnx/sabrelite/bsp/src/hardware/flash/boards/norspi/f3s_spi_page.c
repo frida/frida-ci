@@ -42,12 +42,12 @@ uint8_t *f3s_spi_page(f3s_socket_t *socket,
 
 	// ensure that offset + size is not out of bounds
 	if(size) {
-		*size = min(*size, socket->window_size - offset);
+		*size = __min(*size, socket->window_size - offset);
 	}
 
 	// memory pointers are not applicable to this device
 	// so we just return ~NULL every time the offset is within bounds
-	return (uint8_t*)~NULL;
+	return (uint8_t*)~0;
 }
 
 
