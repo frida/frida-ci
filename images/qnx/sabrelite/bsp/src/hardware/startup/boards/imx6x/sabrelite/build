@@ -1,161 +1,28 @@
-###################################################################################
-#
-# Neutrino trunk on the Freescale i.MX6Q Sabre-Lite Board, based on ARM Cortex A9-MPCore Platform
-#
-####################################################################################
-#
-# On-board devices:
-# ----------------
-#
-# device:   i.MX6Q UART2
-#       devc-sermx1 -e -F -S -c80000000 0x021E8000,59
-#
-# device:   i.MX6Q I2C
-#       i2c-mx35 -p 0x021A0000 -i68 -c66000000 --u 1
-#       i2c-mx35 -p 0x021A4000 -i69 -c66000000 --u 2
-#       i2c-mx35 -p 0x021A8000 -i70 -c66000000 --u 3
-#
-# device:   i.MX6Q USDHC controller
-#      devb-mmcsd-mx6q-ddr3 mmcsd ioport=0x02198000,irq=56 verbose=5
-#      devb-mmcsd-mx6q-ddr3 mmcsd ioport=0x0219C000,irq=57 verbose=5
-#
-# device:   i.MX6Q USB OTG (host mode) 
-#      io-usb -dehci-mx28 ioport=0x02184300,irq=72,phy=0x020ca000,verbose=5,ioport=0x02184100,irq=75,phy=0x020c9000,verbose=5
-#
-# device:   i.MX6Q SSI Audio Controller (connected to SGTL5000 codec)
-#      io-audio -d mx-mx6q-sabrelite mixer=input_mux=mic_in 
-#
-# device: SST 25VF016B SPI Flash Chip
-#     devf-norspi-mx6_sabrelite-ecspi
-#
-# device:   watchdog Timer
-#      wdtkick
-#
-# device:   SRTC
-# RTC:      rtc hw  or  rtc -s hw
-#
-# device: i.MX6Q FlexCAN
-#     dev-can-mx6x can0
-#
-# device: i.MX6Q SATA Driver
-#     devb-ahci ahci ioport=0x02200000,irq=71
-############################################################################
 [image=0x10800000]
-[virtual=armle-v7,raw +compress] .bootstrap = {
-	# Startup parameters:
-	# '-c' -> configure bottom SD slot pin muxing to support Silex SDIO based WLAN module
-	# '-m' -> enable D-Cache, MMU during startup, which will improve boot time if booting from a compressed IFS.	
-	# '-W' -> enable watchdog
-	startup-imx6x-sabrelite -m -v
+[virtual=armle-v7,elf] .bootstrap = {
+	startup-imx6x-sabrelite -m
 
-	PATH=/proc/boot procnto-smp-instr
+	PATH=/proc/boot procnto-smp
 }
 [+script] .script = {
-# Initialise the console
     procmgr_symlink ../../proc/boot/libc.so.3 /usr/lib/ldqnx.so.2
     devc-sermx1 -e -F -S -c80000000 0x021E8000,59
 
     reopen
-    display_msg Welcome to QNX Neutrino 6.5.0 on the i.mx6 Q Sabre-Lite (ARM Cortex-A9 MPCore)
     slogger &
 
     # Start some common servers
     pipe &
-
-    #######################################################################
-    ## WatchDog utility
-    ## If startup is given '-W' parameter then the 'wdtkick' utility MUST
-    ## be uncommented below.
-    #######################################################################
-    #display_msg Starting watchdog...
-    #wdtkick
-
-    #######################################################################
-    ## I2C driver
-    #######################################################################
-    display_msg Starting I2C1,2,3 driver (/dev/i2c1,2,3)...
-    i2c-mx35 -p 0x021A0000 -i68 -c66000000 --u 1 
-    i2c-mx35 -p 0x021A4000 -i69 -c66000000 --u 2
-    i2c-mx35 -p 0x021A8000 -i70 -c66000000 --u 3
-
-    #######################################################################
-    ## SD memory card driver
-    #######################################################################
-    display_msg Starting SD3 memory card driver...
-    devb-mmcsd-mx6q-sabrelite mmcsd ioport=0x02198000,irq=56 verbose=5
-    
-    display_msg Starting SD4 (microSD connector) memory card driver...
-    devb-mmcsd-mx6q-sabrelite mmcsd ioport=0x0219C000,irq=57 verbose=5
-
-    #######################################################################
-    ## SST 25VF016B SPI Flash Chip
-    ## Note that the spi-master resource manager does NOT need to be running
-    ## to use the SPI Flash driver below
-    #######################################################################
-    devf-norspi-mx6_sabrelite-ecspi
-
-    #######################################################################
-    ## CAN
-    #######################################################################
-    dev-can-mx6x -t can0
+    random -p -t &
 
     #######################################################################
     ## RTC
     #######################################################################
-    display_msg Starting rtc utility...
     rtc hw
-
-    #######################################################################
-    ## AUDIO driver (needs I2C1 driver loaded first))
-    #######################################################################
-    io-audio -d mx-mx6q-sabrelite mixer=input_mux=mic_in 
-    waitfor /dev/snd 4
-
-    #######################################################################
-    ## SATA driver
-    #######################################################################
-    display_msg Starting SATA driver...
-    devb-ahci ahci ioport=0x02200000,irq=71 
-
-    #######################################################################
-    ## ECSPI driver
-    ## The i.MX6Q Sabre-Lite has one directly accessible SPI based component - a SPI NOR Flash chip.
-    ## Since the SPI NOR driver does not use the QNX SPI framework, there is no need to launch spi-master
-    ## at all for this board.  That said the commands below provide examples of how to launch ECSPI drivers.
-    ## Note that the parameters to spi-master will need to be adjusted depending on the hardware.
-    #######################################################################
-
-    # Starting Enhanced SPI driver ECSPI1 (/dev/spi1)
-    # spi-master -u1 -d mx51ecspi base=0x02008000,irq=63,loopback=1
-
-    # Starting Enhanced SPI driver ECSPI2 (/dev/spi2)
-    # spi-master -u2 -d mx51ecspi base=0x0200C000,irq=64,loopback=1
-
-    # Starting Enhanced SPI driver ECSPI3 (/dev/spi3)
-    # spi-master -u3 -d mx51ecspi base=0x02010000,irq=65,loopback=1
-
-    # Starting Enhanced SPI driver ECSPI4 (/dev/spi4)
-    # spi-master -u4 -d mx51ecspi base=0x02014000,irq=66,loopback=1
-
-    # Starting Enhanced SPI driver ECSPI5 (/dev/spi5)
-    # spi-master -u5 -d mx51ecspi base=0x02018000,irq=67,loopback=1
-
-
-    #######################################################################
-    ## USB Host 1 and OTG (configured as a USB host) controllers
-    #######################################################################
-    display_msg Starting USB host1 and OTG driver (operating in host mode)
-    io-usb -dehci-mx28 ioport=0x02184300,irq=72,phy=0x020ca000,verbose=5,ioport=0x02184100,irq=75,phy=0x020c9000,verbose=5
-    waitfor /dev/io-usb/io-usb 4
-    waitfor /dev/io-usb/devu-ehci-mx28.so 4
-    
-    display_msg Launching devb-umass...
-    devb-umass cam pnp &
 
     #######################################################################
     ## Networking
     #######################################################################
-    display_msg Starting Ethernet driver
     io-pkt-v4 -dmx6x speed=100,duplex=1
     waitfor /dev/socket
     dhcp.client &
@@ -171,19 +38,12 @@
     waitfor /dev/socket 4
     PATH=$PATH:/usr/bin qconn port=8000
 
-	#######################################################################
-	## TSC2004 Touch Screen
-	#######################################################################
-	#display_msg Starting TSC2004 Touch Screen services...
-	#devi-tsc2004 -Pr tsc2004
-
     # Start the main shell
     SYSNAME=nto
     TERM=qansi
     HOME=/
     PATH=:/bin:/usr/bin:/sbin:/usr/sbin:/proc/boot
-    LD_LIBRARY_PATH=:/lib:/usr/lib:/usr/lib/graphics/iMX6X:/lib/dll:/proc/boot
-    GRAPHICS_ROOT=/usr/lib/graphics/iMX6X
+    LD_LIBRARY_PATH=:/lib:/usr/lib:/proc/boot
     [+session] ksh &
 }
 
@@ -197,82 +57,16 @@
 # Shared libraries
 libc.so
 libm.so.2
-
-###########################################################################
-## uncomment for legacy binary support (Momentics 6.3.2 and earlier)  
-###########################################################################
-#libc.so.2
-
-###########################################################################
-## C++ lib required for GPU 
-###########################################################################
+libz.so.2
 libcpp.so.4
-
-###########################################################################
-## uncomment for USB HOST driver
-###########################################################################
-devu-ehci-mx28.so
-libusbdi.so
-devu-ohci.so
-devh-usb.so
-libhiddi.so
-
-###########################################################################
-## uncomment for USB DEVICE driver
-###########################################################################
-devu-mx6sabrelite-ci.so
-
-###########################################################################
-## uncomment for BLOCK driver
-## substitute cam-xxx.so and fs-xxx.so with the cam drivers and filesystems
-## required
-###########################################################################
-libcam.so
-io-blk.so
-cam-disk.so
-cam-cdrom.so
-fs-qnx6.so
-fs-qnx4.so
-fs-dos.so
-fs-udf.so
-fs-cd.so
+libbacktrace.so.1
 
 ###########################################################################
 ## uncomment for NETWORK driver
 ###########################################################################
 devnp-mx6x.so
 libsocket.so
-# support asix based USB to Ethernet dongles
-devn-asix.so
 devnp-shim.so
-
-###########################################################################
-## uncomment for ECSPI
-###########################################################################
-spi-mx51ecspi.so
-
-###########################################################################
-## AUDIO
-###########################################################################
-deva-ctrl-mx-mx6q-sabrelite.so
-deva-util-restore.so
-libasound.so
-libasound.so.2
-
-###########################################################################
-### touchscreen driver for HannStar HSD100PXN1 10" display
-############################################################################
-libmtouch-egalax.so
-
-###########################################################################
-### touchscreen driver for TSC2004
-############################################################################
-devi-tsc2004
-
-###########################################################################
-## SDMA
-###########################################################################
-libdma-sdma-imx6x.so
 
 # Executables
 [data=c]
@@ -285,17 +79,9 @@ io-pkt-v4
 nicinfo
 ping
 ftp
-fs-nfs3
-fs-cifs
 ifconfig
 dhcp.client
 if_up
-
-###########################################################################
-## uncomment for CAN driver
-###########################################################################
-dev-can-mx6x
-canctl
 
 #######################################################################
 ## uncomment for RTC utility
@@ -305,96 +91,9 @@ rtc
 ###########################################################################
 ## uncomment for REMOTE_DEBUG
 ###########################################################################
- devc-pty
- qconn
- /usr/bin/pdebug=pdebug
-
-
-###########################################################################
-## uncomment for Block driver
-###########################################################################
-devb-mmcsd-mx6q-sabrelite
-fdisk
-mkdosfs
-
-###########################################################################
-## uncomment for SST 25VF016B Flash driver
-## SPI Flash chip can be formatted like so: flashctl -p /dev/fs0p0 -e -f -m
-## After formatting a partition will appear in /fs0p0
-###########################################################################
-devf-norspi-mx6_sabrelite-ecspi
-flashctl
-
-###########################################################################
-## uncomment for ECSPI
-###########################################################################
-spi-master
-
-###########################################################################
-## I2C driver
-###########################################################################
-i2c-mx35
-
-###########################################################################
-## AUDIO
-###########################################################################
-io-audio
-wave
-waverec
-mix_ctl
-
-###########################################################################
-## Workaround needed for touchscreen driver (supports HannStar HSD100PXN1
-## display).
-###########################################################################
-[type=link] /dev/devi=/dev/null
-
-###########################################################################
-## uncomment for Image Loading
-###########################################################################
-# img_codec_bmp.so
-# img_codec_gif.so
-# img_codec_jpg.so
-# img_codec_png.so
-# img_codec_sgi.so
-# img_codec_tga.so
-
-###########################################################################
-## uncomment for Font loading
-###########################################################################
-# libFF-T2K.so.2
-
-###########################################################################
-## uncomment if graphics support is needed
-###########################################################################
-libdisputil.so.2
-
-###########################################################################
-## uncomment for disk drivers (filesystems support)
-###########################################################################
-/sbin/fdisk=fdisk
-/sbin/mkdosfs=mkdosfs
-/sbin/mkqnx6fs=mkqnx6fs
-/sbin/chkdosfs=chkdosfs
-/sbin/chkqnx6fs=chkqnx6fs
-/sbin/chkfsys=chkfsys
-/usr/bin/fsysinfo=fsysinfo
-
-###########################################################################
-## uncomment for USB HOST driver
-###########################################################################
-io-usb
-usb
-
-###########################################################################
-## uncomment for WatchDog utility
-###########################################################################
-wdtkick
-
-###########################################################################
-## uncomment for SATA driver
-###########################################################################
-devb-ahci
+devc-pty
+qconn
+/usr/bin/pdebug=pdebug
 
 ###########################################################################
 ## general commands
@@ -423,68 +122,3 @@ sleep
 random
 dd
 top
-
-###########################################################################
-## END OF BUILD SCRIPT
-###########################################################################
-
-###########################################################################
-##
-## INTERRUPT MAP (i.mx6DQ)
-##
-###########################################################################
-##
-##
-## vector: 0 - 31
-## device: reserved
-##
-## vector 32 - 158
-## device: same IRQs as defined in i.MX6Q TRM
-##
-## vector 159
-## device: reserved
-##
-## GPIO interrupts are cascaded.  Individual GPIO IRQs are defined below
-## vector 160 - 175
-## device: GPIO1[1 - 15]
-##
-## vector 176 - 191
-## device: GPIO1[16 - 31]
-##
-## vector 192 - 207
-## device: GPIO2[1 - 15]
-##
-## vector 208 - 223
-## device: GPIO2[16 - 31]
-##
-## vector 224 - 239
-## device: GPIO3[1 - 15]
-##
-## vector 240 - 255
-## device: GPIO3[16 - 31]
-##
-## vector 256 - 271
-## device: GPIO4[1 - 15]
-##
-## vector 272 - 287
-## device: GPIO4[16 - 31]
-##
-## vector 288 - 303
-## device: GPIO5[1 - 15]
-##
-## vector 305 - 319
-## device: GPIO5[16 - 31]
-##
-## vector 320 - 335
-## device: GPIO6[1 - 15]
-##
-## vector 336 - 351
-## device: GPIO6[16 - 31]
-##
-## vector 352 - 367
-## device: GPIO7[1 - 15]
-##
-## vector 368 - 383
-## device: GPIO7[16 - 31]
-##
-###########################################################################

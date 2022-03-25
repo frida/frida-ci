@@ -37,6 +37,15 @@ void mx6q_init_mac(void)
 	unsigned int fuse_val, mac_low, mac_high;
 	unsigned char mac_addr[6];
 
+#if 1
+	// QEMU leaves the fuse values zeroed
+	mac_addr[0] = 0x04;
+	mac_addr[1] = 0x13;
+	mac_addr[2] = 0x37;
+	mac_addr[3] = 0x42;
+	mac_addr[4] = 0x24;
+	mac_addr[5] = 0x77;
+#else
 	// read lower 32 bits of MAC address
 	fuse_val = in32(MX6X_OCOTP_BASE + MX6X_OCOTP_MAC0);
 	mac_addr[5] = fuse_val & 0xff;
@@ -48,7 +57,8 @@ void mx6q_init_mac(void)
 	fuse_val = in32(MX6X_OCOTP_BASE + MX6X_OCOTP_MAC1);
 	mac_addr[1] = fuse_val & 0xff;
 	mac_addr[0] = (fuse_val >> 8) & 0xff;
-	
+#endif
+
 	// program lower 32 bits of MAC addr into ENET
 	mac_low = ((mac_addr[0] << 24) + (mac_addr[1] << 16) + (mac_addr[2] << 8) + mac_addr[3]);
 	out32(MX6X_FEC_BASE + MX6X_ENET_PALR, mac_low);
