@@ -3,21 +3,22 @@ FROM ubuntu:21.04
 LABEL maintainer="oleavr@frida.re"
 
 RUN apt-get update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	&& export DEBIAN_FRONTEND=noninteractive \
+	&& apt-get install -y \
 		build-essential \
 		curl \
 		git \
 		lib32stdc++-10-dev \
 		libc6-dev-i386 \
 		locales \
-		nodejs \
-		npm \
 		python3-dev \
 		python3-pip \
 		python3-requests \
 		python3-setuptools \
 		ruby \
 		ruby-dev \
+	&& curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+	&& apt-get install -y nodejs \
 	&& sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
 	&& dpkg-reconfigure --frontend=noninteractive locales \
 	&& update-locale LANG=en_US.UTF-8 \
