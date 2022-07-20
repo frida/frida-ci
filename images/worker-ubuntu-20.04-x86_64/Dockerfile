@@ -11,6 +11,7 @@ RUN apt-get update \
 		lib32stdc++-9-dev \
 		libc6-dev-i386 \
 		libgl1-mesa-dev \
+		libglib2.0-0 \
 		locales \
 		p7zip \
 		python3-dev \
